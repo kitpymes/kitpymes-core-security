@@ -1,0 +1,88 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33110.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{93254BD6-6EFE-484E-A8F3-667FC28FF4A0}"
+	ProjectSection(SolutionItems) = preProject
+		docs\LICENSE.txt = docs\LICENSE.txt
+		docs\README.md = docs\README.md
+		docs\README_NUGET.md = docs\README_NUGET.md
+		docs\RELEASE_NOTES.txt = docs\RELEASE_NOTES.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "analyzers", "analyzers", "{B9D1E082-3044-45F5-BE31-E9FB1D8B6480}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		docs\analyzers\stylecop.json = docs\analyzers\stylecop.json
+		docs\analyzers\stylecop.ruleset = docs\analyzers\stylecop.ruleset
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{6A4CDB39-F8C4-442A-8026-A4475659EB0D}"
+	ProjectSection(SolutionItems) = preProject
+		docs\images\logo.ico = docs\images\logo.ico
+		docs\images\logo.png = docs\images\logo.png
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "screenshot", "screenshot", "{82AE9803-98EB-4F16-B850-FBC8D8A36C27}"
+	ProjectSection(SolutionItems) = preProject
+		docs\images\screenshot\resultados_testing.png = docs\images\screenshot\resultados_testing.png
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "props", "props", "{B8F951C6-DA43-443D-8135-91276B698C8A}"
+	ProjectSection(SolutionItems) = preProject
+		docs\props\Common.Build.props = docs\props\Common.Build.props
+		.github\workflows\dotnetcore.yml = .github\workflows\dotnetcore.yml
+		global.json = global.json
+		docs\props\Pack.Build.props = docs\props\Pack.Build.props
+		docs\props\tests.runsettings = docs\props\tests.runsettings
+		_config.yml = _config.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "signassembly", "signassembly", "{DCFC7720-B209-4053-BCB3-F9110F421EBD}"
+	ProjectSection(SolutionItems) = preProject
+		docs\signassembly\SignStrong.snk = docs\signassembly\SignStrong.snk
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kitpymes.Core.Security", "Kitpymes.Core.Security\Kitpymes.Core.Security.csproj", "{C0C5F383-8D68-45A5-9055-C887DB85E0E6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kitpymes.Core.Security.Tests", "Kitpymes.Core.Security.Tests\Kitpymes.Core.Security.Tests.csproj", "{D772E47E-11E0-4FB0-A490-5F2DFF7A69DC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4B4DA50C-6971-4755-8116-6E26F7C0BA05}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Api.Security", "tests\Test.Api.Security\Test.Api.Security.csproj", "{623744D9-6BAA-498C-BD11-E8A0AF962908}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C0C5F383-8D68-45A5-9055-C887DB85E0E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0C5F383-8D68-45A5-9055-C887DB85E0E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0C5F383-8D68-45A5-9055-C887DB85E0E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0C5F383-8D68-45A5-9055-C887DB85E0E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D772E47E-11E0-4FB0-A490-5F2DFF7A69DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D772E47E-11E0-4FB0-A490-5F2DFF7A69DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D772E47E-11E0-4FB0-A490-5F2DFF7A69DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D772E47E-11E0-4FB0-A490-5F2DFF7A69DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{623744D9-6BAA-498C-BD11-E8A0AF962908}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{623744D9-6BAA-498C-BD11-E8A0AF962908}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{623744D9-6BAA-498C-BD11-E8A0AF962908}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{623744D9-6BAA-498C-BD11-E8A0AF962908}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B9D1E082-3044-45F5-BE31-E9FB1D8B6480} = {93254BD6-6EFE-484E-A8F3-667FC28FF4A0}
+		{6A4CDB39-F8C4-442A-8026-A4475659EB0D} = {93254BD6-6EFE-484E-A8F3-667FC28FF4A0}
+		{82AE9803-98EB-4F16-B850-FBC8D8A36C27} = {6A4CDB39-F8C4-442A-8026-A4475659EB0D}
+		{B8F951C6-DA43-443D-8135-91276B698C8A} = {93254BD6-6EFE-484E-A8F3-667FC28FF4A0}
+		{DCFC7720-B209-4053-BCB3-F9110F421EBD} = {93254BD6-6EFE-484E-A8F3-667FC28FF4A0}
+		{623744D9-6BAA-498C-BD11-E8A0AF962908} = {4B4DA50C-6971-4755-8116-6E26F7C0BA05}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D1FAA268-693B-43A6-AEE1-8ED72E6A9993}
+	EndGlobalSection
+EndGlobal
