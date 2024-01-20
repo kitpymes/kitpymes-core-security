@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 using Kitpymes.Core.Security.Authentication.JsonWebToken.Settings;
 using Kitpymes.Core.Shared.Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -29,15 +28,14 @@ using Microsoft.IdentityModel.Tokens;
 /// <remarks>
 /// <para>En esta clase se pueden agregar todos los métodos para el token de sesión.</para>
 /// </remarks>
-public class JsonWebTokenService : IJsonWebTokenService
+/// <remarks>
+/// Inicializa una nueva instancia de la clase <see cref="JsonWebTokenService"/>.
+/// </remarks>
+/// <param name="settings">Configuración para el token de sesión.</param>
+public class JsonWebTokenService(JsonWebTokenSettings settings)
+    : IJsonWebTokenService
 {
-    /// <summary>
-    /// Inicializa una nueva instancia de la clase <see cref="JsonWebTokenService"/>.
-    /// </summary>
-    /// <param name="settings">Configuración para el token de sesión.</param>
-    public JsonWebTokenService(JsonWebTokenSettings settings) => JsonWebTokenSettings = settings;
-
-    private JsonWebTokenSettings JsonWebTokenSettings { get; }
+    private JsonWebTokenSettings JsonWebTokenSettings => settings;
 
     /// <inheritdoc/>
     public GetJsonWebTokenResult Get(string? token)

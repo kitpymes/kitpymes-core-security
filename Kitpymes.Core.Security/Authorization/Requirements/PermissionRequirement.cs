@@ -35,20 +35,20 @@ public class PermissionRequirementHandler : AuthorizationHandler<PermissionRequi
     /// <inheritdoc/>
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
-        context.ToThrowIfNullOrEmpty();
-
-        requirement.ToThrowIfNullOrEmpty();
-
         var user = context.User.ToGet<UserSession>(nameof(UserSession));
 
         if (user.ToIsNullOrEmpty())
         {
-            throw new UnauthorizedAccessException("Necesita ingresar al sistema para la acción que desea realizar.");
+            context.Fail(new AuthorizationFailureReason(this, "Necesita ingresar al sistema para la acción que desea realizar."));
+
+            return Task.CompletedTask;
         }
 
         if (user.Permissions.ToIsNullOrAny() == true || user.Permissions.Contains(requirement.Permission) == false)
         {
-            throw new UnauthorizedAccessException("Su usuario no posee el permiso requerido para la acción que desea realizar.");
+            context.Fail(new AuthorizationFailureReason(this, "No posee el permiso requerido para la acción que desea realizar."));
+
+            return Task.CompletedTask;
         }
 
         context.Succeed(requirement);

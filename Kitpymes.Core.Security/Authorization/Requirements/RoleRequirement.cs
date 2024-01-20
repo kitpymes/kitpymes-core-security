@@ -34,20 +34,20 @@ public class RoleRequirementHandler : AuthorizationHandler<RoleRequirement>
     /// <inheritdoc/>
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, RoleRequirement requirement)
     {
-        context.ToThrowIfNullOrEmpty();
-
-        requirement.ToThrowIfNullOrEmpty();
-
         var user = context.User.ToGet<UserSession>(nameof(UserSession));
 
         if (user.ToIsNullOrEmpty())
         {
-            throw new UnauthorizedAccessException("Necesita ingresar al sistema para la acción que desea realizar.");
+            context.Fail(new AuthorizationFailureReason(this, "Necesita ingresar al sistema para la acción que desea realizar."));
+
+            return Task.CompletedTask;
         }
 
         if (user.Role.ToIsNullOrEmpty() == true || user.Role != requirement.Role)
         {
-            throw new UnauthorizedAccessException("Su usuario no posee el rol requerido para la acción que desea realizar.");
+            context.Fail(new AuthorizationFailureReason(this, "Su usuario no posee el rol requerido para la acción que desea realizar."));
+
+            return Task.CompletedTask;
         }
 
         context.Succeed(requirement);
