@@ -23,7 +23,7 @@ public class RoleRequirement(string role)
     /// <summary>
     /// Obtiene el rol.
     /// </summary>
-    public string Role { get; } = role;
+    public string Role => role;
 }
 
 /// <summary>
@@ -34,7 +34,7 @@ public class RoleRequirementHandler : AuthorizationHandler<RoleRequirement>
     /// <inheritdoc/>
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, RoleRequirement requirement)
     {
-        var user = context.User.ToGet<UserSession>(nameof(UserSession));
+        var user = context.User.ToGet<UserSession>(ApiSession.UserClaimType);
 
         if (user.ToIsNullOrEmpty())
         {

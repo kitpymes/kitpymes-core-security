@@ -24,7 +24,7 @@ public class PermissionRequirement(string permission)
     /// <summary>
     /// Obtiene el permiso.
     /// </summary>
-    public string Permission { get; } = permission;
+    public string Permission => permission;
 }
 
 /// <summary>
@@ -35,7 +35,7 @@ public class PermissionRequirementHandler : AuthorizationHandler<PermissionRequi
     /// <inheritdoc/>
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
-        var user = context.User.ToGet<UserSession>(nameof(UserSession));
+        var user = context.User.ToGet<UserSession>(ApiSession.UserClaimType);
 
         if (user.ToIsNullOrEmpty())
         {

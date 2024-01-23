@@ -8,7 +8,6 @@
 namespace Kitpymes.Core.Security.Authentication.JsonWebToken
 {
     using System.Collections.Generic;
-    using System.Security.Claims;
 
     /*
      Clase de resultado GetJsonWebTokenResult
@@ -27,9 +26,7 @@ namespace Kitpymes.Core.Security.Authentication.JsonWebToken
         /// <summary>
         /// Obtiene o establece las claims del token.
         /// </summary>
-#pragma warning disable CA2227 // Las propiedades de colección deben ser de solo lectura
         public IDictionary<string, string> Claims { get; set; } = new Dictionary<string, string>();
-#pragma warning restore CA2227 // Las propiedades de colección deben ser de solo lectura
 
         /// <summary>
         /// Obtiene o establece las audiencias del token.
@@ -39,16 +36,12 @@ namespace Kitpymes.Core.Security.Authentication.JsonWebToken
         /// <summary>
         /// Obtiene o establece los headers del token.
         /// </summary>
-#pragma warning disable CA2227 // Las propiedades de colección deben ser de solo lectura
         public IDictionary<string, object>? Header { get; set; }
-#pragma warning restore CA2227 // Las propiedades de colección deben ser de solo lectura
 
         /// <summary>
         /// Obtiene o establece los payload del token.
         /// </summary>
-#pragma warning disable CA2227 // Las propiedades de colección deben ser de solo lectura
         public IDictionary<string, object>? Payload { get; set; }
-#pragma warning restore CA2227 // Las propiedades de colección deben ser de solo lectura
 
         /// <summary>
         /// Obtiene o establece la fecha de expiración del token.

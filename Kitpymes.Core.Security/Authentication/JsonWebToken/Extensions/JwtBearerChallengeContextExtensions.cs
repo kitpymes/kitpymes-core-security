@@ -7,12 +7,8 @@
 
 namespace Kitpymes.Core.Security.Authentication.JsonWebToken.Extensions;
 
-using System.Text;
-using System.Text.Json;
 using Kitpymes.Core.Shared.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 
 /*

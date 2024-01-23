@@ -39,7 +39,7 @@ public static class JsonWebTokenServiceCollectionExtensions
     /// <param name="services">Colección de servicios.</param>
     /// <returns>IJsonWebTokenService | ArgumentException: si no se encuentra el servicio IJsonWebTokenProvider.</returns>
     public static IJsonWebTokenService GetAuthJsonWebToken(this IServiceCollection services)
-        => services.ToService<IJsonWebTokenService>().ToThrowIfNullOrEmpty();
+        => services.ToRequiredService<IJsonWebTokenService>();
 
     /// <summary>
     /// Carga el servicio de autenticación por token.
@@ -106,7 +106,7 @@ public static class JsonWebTokenServiceCollectionExtensions
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = securityKey,
 
-                        ValidateIssuer = !string.IsNullOrWhiteSpace(settings.Issuer),
+                        ValidateIssuer = !settings.Issuer.ToIsNullOrEmpty(),
                         ValidIssuer = settings.Issuer,
 
                         ValidateAudience = !settings.Audience.ToIsNullOrEmpty(),
