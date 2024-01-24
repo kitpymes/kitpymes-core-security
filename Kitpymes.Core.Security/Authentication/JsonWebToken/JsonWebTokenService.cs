@@ -63,16 +63,13 @@ public class JsonWebTokenService(JsonWebTokenSettings settings)
 
     /// <inheritdoc/>
     public CreateJsonWebTokenResult Create(Claim claim, IDictionary<string, IEnumerable<string>>? headers = null)
-    {
-        claim.ToThrowIfNullOrEmpty();
-
-        return Create(new List<Claim> { claim });
-    }
+        => Create(new List<Claim> { claim });
 
     /// <inheritdoc/>
     public CreateJsonWebTokenResult Create(IEnumerable<Claim> claims, IDictionary<string, IEnumerable<string>>? headers = null)
     {
         claims.ToThrowIfNullOrAny();
+
         JsonWebTokenSettings.PrivateKey.ToThrowIfNullOrEmpty();
 
         var expires = DateTime.UtcNow.Add(new TimeSpan(

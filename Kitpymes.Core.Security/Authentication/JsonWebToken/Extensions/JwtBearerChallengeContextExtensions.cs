@@ -26,28 +26,68 @@ using Microsoft.IdentityModel.Tokens;
 public static class JwtBearerChallengeContextExtensions
 {
     /// <summary>
-    /// Detalle del contexto.
+    /// Mensaje con detalles del contexto.
     /// </summary>
-    /// <param name="context">Contexto.</param>
-    /// <returns>string.</returns>
+    /// <param name="context">Contexto de tipo JwtBearerChallengeContext.</param>
+    /// <returns>Mensaje de error.</returns>
     public static string ToDetails(this JwtBearerChallengeContext context)
     {
-        var error = context.Error.ToIsNullOrEmpty() ? "invalid_token" : context.Error;
+        var token_error = "invalid_token: This request requires a valid JWT access token to be provided";
 
-        var error_description = context.ErrorDescription.ToIsNullOrEmpty()
-            ? "This request requires a valid JWT access token to be provided"
-            : context.ErrorDescription;
-
-        if (context.AuthenticateFailure?.GetType() == typeof(SecurityTokenExpiredException))
+        if (!context.Error.ToIsNullOrEmpty())
         {
-            var authenticationException = context.AuthenticateFailure as SecurityTokenExpiredException;
+            token_error = context.Error + " | " + context.ErrorDescription;
 
-            if (authenticationException?.Expires.ToIsNullOrEmpty() == false)
+            if (context.AuthenticateFailure is SecurityTokenInvalidLifetimeException)
             {
-                error_description = $"The JWT token expired on {authenticationException?.Expires.ToString("o")}";
+                var authenticationException = context.AuthenticateFailure as SecurityTokenInvalidLifetimeException;
+
+                if (authenticationException?.Expires.HasValue == true)
+                {
+                    token_error += $" | Expires: {authenticationException.Expires.Value:G}";
+                }
+            }
+            else if (context.AuthenticateFailure is SecurityTokenExpiredException)
+            {
+                var authenticationException = context.AuthenticateFailure as SecurityTokenExpiredException;
+
+                token_error += $" | Expires: {authenticationException?.Expires:G}";
             }
         }
 
-        return new { error, error_description }.ToSerialize();
+        return token_error;
+    }
+
+    /// <summary>
+    /// Mensaje con detalles del contexto.
+    /// </summary>
+    /// <param name="context">Contexto de tipo AuthenticationFailedContext.</param>
+    /// <returns>Mensaje de error.</returns>
+    public static string ToDetails(this AuthenticationFailedContext context)
+    {
+        var token_error = "invalid_token: This request requires a valid JWT access token to be provided";
+
+        if (!context.Exception.ToIsNullOrEmpty())
+        {
+            token_error = context.Exception.Message;
+
+            if (context.Exception is SecurityTokenInvalidLifetimeException)
+            {
+                var authenticationException = context.Exception as SecurityTokenInvalidLifetimeException;
+
+                if (authenticationException?.Expires.HasValue == true)
+                {
+                    token_error += $" | Expires: {authenticationException.Expires.Value:G}";
+                }
+            }
+            else if (context.Exception is SecurityTokenExpiredException)
+            {
+                var authenticationException = context.Exception as SecurityTokenExpiredException;
+
+                token_error += $" | Expires: {authenticationException?.Expires:G}";
+            }
+        }
+
+        return token_error;
     }
 }

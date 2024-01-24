@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 /*
@@ -65,11 +66,10 @@ public static class JsonWebTokenServiceCollectionExtensions
             var validPrivateKey = settings.PrivateKey.ToThrowIfNullOrEmpty();
 
             var validPublicKey = settings.PublicKey.ToThrowIfNullOrEmpty();
-
-#if debug
-            Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+#if DEBUG
+            IdentityModelEventSource.ShowPII = true;
+            IdentityModelEventSource.LogCompleteSecurityArtifact = true;
 #endif
-
             RSA algorithm = RSA.Create();
 
             algorithm.ImportRSAPublicKey(Convert.FromBase64String(validPublicKey), out _);
@@ -133,7 +133,7 @@ public static class JsonWebTokenServiceCollectionExtensions
                         {
                             await Task.CompletedTask;
 
-                            throw new UnauthorizedAccessException(context.Exception.ToFullMessage());
+                            throw new UnauthorizedAccessException(context.ToDetails());
                         },
                         OnMessageReceived = async context =>
                         {
