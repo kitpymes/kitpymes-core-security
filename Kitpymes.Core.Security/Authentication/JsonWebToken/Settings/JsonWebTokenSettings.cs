@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="JsonWebTokenSettings.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -12,16 +12,16 @@ using Kitpymes.Core.Security.Authorization.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 /*
-    Clase para la configuración del token de sesión JsonWebTokenSettings
-    Contiene las propiedades para la configuración del token de sesión
+    Clase para la configuraciÃ³n del token de sesiÃ³n JsonWebTokenSettings
+    Contiene las propiedades para la configuraciÃ³n del token de sesiÃ³n
 */
 
 /// <summary>
-/// Clase para la configuración del token de sesión <c>JsonWebTokenSettings</c>.
-/// Contiene las propiedades para la configuración del token de sesión.
+/// Clase para la configuraciÃ³n del token de sesiÃ³n <c>JsonWebTokenSettings</c>.
+/// Contiene las propiedades para la configuraciÃ³n del token de sesiÃ³n.
 /// </summary>
 /// <remarks>
-/// <para>En esta clase se pueden agregar todas las propiedades para la configuración del token de sesión.</para>
+/// <para>En esta clase se pueden agregar todas las propiedades para la configuraciÃ³n del token de sesiÃ³n.</para>
 /// </remarks>
 public class JsonWebTokenSettings
 {
@@ -31,29 +31,29 @@ public class JsonWebTokenSettings
     public const bool DefaultEnabled = false;
 
     /// <summary>
-    /// Valor por defecto que indica el esquema de autenticación.
+    /// Valor por defecto que indica el esquema de autenticaciÃ³n.
     /// </summary>
     public const string DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 
     /// <summary>
-    /// Valor por defecto que indica el esquema de autenticación.
+    /// Valor por defecto que indica el esquema de autenticaciÃ³n.
     /// </summary>
     public const string DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 
     /// <summary>
-    /// Valor por defecto que indica si se requiere HTTPS para la dirección o autoridad de metadatos.
+    /// Valor por defecto que indica si se requiere HTTPS para la direcciÃ³n o autoridad de metadatos.
     /// Esto debe desactivarse solo en entornos de desarrollo.
     /// </summary>
     public const bool DefaultRequireHttpsMetadata = true;
 
     /// <summary>
-    /// Valor por defecto que indica si se requiere HTTPS para la dirección o autoridad de metadatos.
+    /// Valor por defecto que indica si se requiere HTTPS para la direcciÃ³n o autoridad de metadatos.
     /// Esto debe desactivarse solo en entornos de desarrollo.
     /// </summary>
     public const bool DefaultSaveToken = true;
 
     /// <summary>
-    /// Valor por defecto que indica si los errores de validación del token deben devolverse al cliente mediante el encabezado WWW-Authenticate.
+    /// Valor por defecto que indica si los errores de validaciÃ³n del token deben devolverse al cliente mediante el encabezado WWW-Authenticate.
     /// </summary>
     public const bool DefaultIncludeErrorDetails = true;
 
@@ -63,7 +63,7 @@ public class JsonWebTokenSettings
     public const bool DefaultRequireExpirationTime = true;
 
     /// <summary>
-    /// Valor por defecto que indica si se valida la vida útil del token.
+    /// Valor por defecto que indica si se valida la vida Ãºtil del token.
     /// </summary>
     public const bool DefaultValidateLifetime = true;
 
@@ -93,7 +93,7 @@ public class JsonWebTokenSettings
     }
 
     /// <summary>
-    /// Obtiene o establece el esquema de autenticación.
+    /// Obtiene o establece el esquema de autenticaciÃ³n.
     /// <para><strong>Default:</strong> <see cref="DefaultAuthenticateScheme"/> = "Bearer".</para>
     /// </summary>
     public string? AuthenticateScheme
@@ -109,7 +109,7 @@ public class JsonWebTokenSettings
     }
 
     /// <summary>
-    /// Obtiene o establece el esquema de cambio de autenticación.
+    /// Obtiene o establece el esquema de cambio de autenticaciÃ³n.
     /// <para><strong>Default:</strong> <see cref="DefaultChallengeScheme"/> = "Bearer".</para>
     /// </summary>
     public string? ChallengeScheme
@@ -125,7 +125,7 @@ public class JsonWebTokenSettings
     }
 
     /// <summary>
-    /// Obtiene o establece si se requiere HTTPS para la dirección o autoridad de metadatos.
+    /// Obtiene o establece si se requiere HTTPS para la direcciÃ³n o autoridad de metadatos.
     /// Esto debe desactivarse solo en entornos de desarrollo.
     /// <para><strong>Default:</strong> <see cref="DefaultRequireHttpsMetadata"/> = true.</para>
     /// </summary>
@@ -158,7 +158,7 @@ public class JsonWebTokenSettings
     }
 
     /// <summary>
-    /// Obtiene o establece si el token de portador debe almacenarse en Microsoft.AspNetCore.Authentication.AuthenticationProperties después de una autorización exitosa.
+    /// Obtiene o establece si el token de portador debe almacenarse en Microsoft.AspNetCore.Authentication.AuthenticationProperties despuÃ©s de una autorizaciÃ³n exitosa.
     /// <para><strong>Default:</strong> <see cref="DefaultSaveToken"/> = true.</para>
     /// </summary>
     public bool? SaveToken
@@ -174,7 +174,7 @@ public class JsonWebTokenSettings
     }
 
     /// <summary>
-    /// Obtiene o establece si los errores de validación del token deben devolverse al cliente mediante el encabezado WWW-Authenticate.
+    /// Obtiene o establece si los errores de validaciÃ³n del token deben devolverse al cliente mediante el encabezado WWW-Authenticate.
     /// <para><strong>Default:</strong> <see cref="DefaultIncludeErrorDetails"/> = true.</para>
     /// </summary>
     public bool? IncludeErrorDetails
@@ -190,7 +190,7 @@ public class JsonWebTokenSettings
     }
 
     /// <summary>
-    /// Obtiene o establece si se valida la vida útil del token.
+    /// Obtiene o establece si se valida la vida Ãºtil del token.
     /// <para><strong>Default:</strong> <see cref="DefaultValidateLifetime"/> = true.</para>
     /// </summary>
     public bool? ValidateLifetime
@@ -206,17 +206,17 @@ public class JsonWebTokenSettings
     }
 
     /// <summary>
-    /// Obtiene o establece la configuración del tiempo de expiración del token de sesión.
+    /// Obtiene o establece la configuraciÃ³n del tiempo de expiraciÃ³n del token de sesiÃ³n.
     /// </summary>
     public ExpireSettings Expire { get; set; } = new ExpireSettings();
 
     /// <summary>
-    /// Obtiene o establece la clave pública de sesión.
+    /// Obtiene o establece la clave pÃºblica de sesiÃ³n.
     /// </summary>
     public string? PublicKey { get; set; }
 
     /// <summary>
-    /// Obtiene o establece la clave privada de sesión.
+    /// Obtiene o establece la clave privada de sesiÃ³n.
     /// </summary>
     public string? PrivateKey { get; set; }
 

@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="CookiesService.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -22,7 +22,7 @@ using Microsoft.AspNetCore.Http;
 */
 
 /// <summary>
-/// Interfaz para el token de sesión <c>CookiesService</c>.
+/// Interfaz para el token de sesiÃ³n <c>CookiesService</c>.
 /// Contiene la funcionalidad para autenticarse por medio de cookies.
 /// </summary>
 /// <remarks>
@@ -33,7 +33,7 @@ public class CookiesService : ICookiesService
     /// <summary>
     /// Inicializa una nueva instancia de la clase <see cref="CookiesService"/>.
     /// </summary>
-    /// <param name="settings">Configuración de la autenticación.</param>
+    /// <param name="settings">ConfiguraciÃ³n de la autenticaciÃ³n.</param>
     /// <param name="authenticationService">Servicio para autenticarse.</param>
     /// <param name="httpContextAccessor">Servicio para acceder al cotexto.</param>
     public CookiesService(CookiesSettings settings, IAuthenticationService authenticationService, IHttpContextAccessor httpContextAccessor)

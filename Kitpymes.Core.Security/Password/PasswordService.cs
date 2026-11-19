@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="PasswordService.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -19,21 +19,21 @@ using Kitpymes.Core.Shared.Extensions;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
 /*
-    Clase para encriptar contraseñas PasswordService
-    Contiene los métodos para encriptar contraseñas
+    Clase para encriptar contraseÃ±as PasswordService
+    Contiene los mÃ©todos para encriptar contraseÃ±as
 */
 
 /// <summary>
-/// Clase para encriptar contraseñas <c>PasswordService</c>.
-/// Contiene los métodos para encriptar contraseñas.
+/// Clase para encriptar contraseÃ±as <c>PasswordService</c>.
+/// Contiene los mÃ©todos para encriptar contraseÃ±as.
 /// </summary>
 /// <remarks>
-/// <para>En esta interfaz se pueden agregar todos los métodos para la encriptación de contraseñas.</para>
+/// <para>En esta interfaz se pueden agregar todos los mÃ©todos para la encriptaciÃ³n de contraseÃ±as.</para>
 /// </remarks>
 /// <remarks>
 /// Inicializa una nueva instancia de la clase <see cref="PasswordService"/>.
 /// </remarks>
-/// <param name="settings">Configuración de la contraseña.</param>
+/// <param name="settings">ConfiguraciÃ³n de la contraseÃ±a.</param>
 public class PasswordService(PasswordSettings settings)
     : IPasswordService
 {
@@ -55,7 +55,7 @@ public class PasswordService(PasswordSettings settings)
 
         if (PasswordSettings.RequireEspecialChars == true)
         {
-            var especialChars = "@#%&*?¿_-+=".ToRandom(1);
+            var especialChars = "@#%&*?Â¿_-+=".ToRandom(1);
 
             passwordBuilder.Append(especialChars);
         }

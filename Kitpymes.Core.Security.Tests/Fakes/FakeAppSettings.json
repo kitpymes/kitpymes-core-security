@@ -20,7 +20,7 @@
         "EncryptorSettings": {
             "Enabled": true, // (bool) Default: false
             "ApplicationName": "AppTest", // (string) Default: "App"
-            "KeyLifetimeFromDays": 7, // (int) Default: 30 : Debe ser mayor o igual a 7 días.
+            "KeyLifetimeFromDays": 7, // (int) Default: 30 : Debe ser mayor o igual a 7 dÃ­as.
             "PersistKeysToFileSystem": "Fakes/PersistKeysToFileSystems" // (string) Default: "bin\debug\keys"
         },
         "AuthenticationSettings": {

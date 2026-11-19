@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="ExpireSettings.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -8,36 +8,36 @@
 namespace Kitpymes.Core.Security.Authentication
 {
     /*
-        Clase para la configuración de la fecha de expiración ExpireSettings
-        Contiene los métodos para la configuración de la fecha de expiración
+        Clase para la configuraciÃ³n de la fecha de expiraciÃ³n ExpireSettings
+        Contiene los mÃ©todos para la configuraciÃ³n de la fecha de expiraciÃ³n
     */
 
     /// <summary>
-    /// Clase para la configuración de la fecha de expiración <c>ExpireSettings</c>.
-    /// Contiene los métodos para la configuración de la fecha de expiración.
+    /// Clase para la configuraciÃ³n de la fecha de expiraciÃ³n <c>ExpireSettings</c>.
+    /// Contiene los mÃ©todos para la configuraciÃ³n de la fecha de expiraciÃ³n.
     /// </summary>
     /// <remarks>
-    /// <para>En esta clase se pueden agregar todos los métodos para la configuración de la fecha de expiración.</para>
+    /// <para>En esta clase se pueden agregar todos los mÃ©todos para la configuraciÃ³n de la fecha de expiraciÃ³n.</para>
     /// </remarks>
     public class ExpireSettings
     {
         /// <summary>
-        /// Valor por defecto que indica el día de expiración.
+        /// Valor por defecto que indica el dÃ­a de expiraciÃ³n.
         /// </summary>
         public const int DefaultDays = 30;
 
         /// <summary>
-        /// Valor por defecto que indica la hora de expiración.
+        /// Valor por defecto que indica la hora de expiraciÃ³n.
         /// </summary>
         public const int DefaultHours = 0;
 
         /// <summary>
-        /// Valor por defecto que indica los minutos de expiración.
+        /// Valor por defecto que indica los minutos de expiraciÃ³n.
         /// </summary>
         public const int DefaultMinutes = 0;
 
         /// <summary>
-        /// Valor por defecto que indica los segundos de expiración.
+        /// Valor por defecto que indica los segundos de expiraciÃ³n.
         /// </summary>
         public const int DefaultSeconds = 0;
 
@@ -47,7 +47,7 @@ namespace Kitpymes.Core.Security.Authentication
         private int _seconds = DefaultSeconds;
 
         /// <summary>
-        /// Obtiene o establece el día de expiración.
+        /// Obtiene o establece el dÃ­a de expiraciÃ³n.
         /// <para><strong>Default:</strong> <see cref="DefaultDays"/> = 30.</para>
         /// </summary>
         public int? Days
@@ -63,7 +63,7 @@ namespace Kitpymes.Core.Security.Authentication
         }
 
         /// <summary>
-        /// Obtiene o establece la hora de expiración.
+        /// Obtiene o establece la hora de expiraciÃ³n.
         /// <para><strong>Default:</strong> <see cref="DefaultHours"/> = 0.</para>
         /// </summary>
         public int? Hours
@@ -79,7 +79,7 @@ namespace Kitpymes.Core.Security.Authentication
         }
 
         /// <summary>
-        /// Obtiene o establece los minutos de expiración.
+        /// Obtiene o establece los minutos de expiraciÃ³n.
         /// <para><strong>Default:</strong> <see cref="DefaultMinutes"/> = 0.</para>
         /// </summary>
         public int? Minutes
@@ -95,7 +95,7 @@ namespace Kitpymes.Core.Security.Authentication
         }
 
         /// <summary>
-        /// Obtiene o establece los segundos de expiración.
+        /// Obtiene o establece los segundos de expiraciÃ³n.
         /// <para><strong>Default:</strong> <see cref="DefaultSeconds"/> = 0.</para>
         /// </summary>
         public int? Seconds

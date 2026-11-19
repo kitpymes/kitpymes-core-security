@@ -1,21 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <NeutralLanguage>es-ES</NeutralLanguage>
   </PropertyGroup>
 
-  <!-- TODO: REEMPLAZAR POR NUGET -->
   <ItemGroup>
-    <Reference Include="Kitpymes.Core.Shared">
-      <HintPath>..\..\..\kitpymes-core-shared\Kitpymes.Core.Shared\bin\Debug\net8.0\Kitpymes.Core.Shared.dll</HintPath>
-    </Reference>
+    <PackageReference Include="Kitpymes.Core.Shared" Version="2.0.1" />
 
-    <Reference Include="Kitpymes.Core.Api">
-      <HintPath>..\..\..\kitpymes-core-api\Kitpymes.Core.Api\bin\Debug\net8.0\Kitpymes.Core.Api.dll</HintPath>
-    </Reference>
+    <PackageReference Include="Kitpymes.Core.Api" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
