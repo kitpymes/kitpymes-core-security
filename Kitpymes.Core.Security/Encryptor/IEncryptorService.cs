@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="IEncryptorService.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -19,7 +19,7 @@ namespace Kitpymes.Core.Security.Encryptor
     /// Contiene las firmas para encriptar.
     /// </summary>
     /// <remarks>
-    /// <para>En esta interfaz se pueden agregar todas las firmas para la encriptación.</para>
+    /// <para>En esta interfaz se pueden agregar todas las firmas para la encriptaciÃ³n.</para>
     /// </remarks>
     public interface IEncryptorService
     {
@@ -27,7 +27,7 @@ namespace Kitpymes.Core.Security.Encryptor
         /// Encripta una cadena.
         /// </summary>
         /// <param name="value">Valor a encriptar.</param>
-        /// <param name="lifetime">Duración.</param>
+        /// <param name="lifetime">DuraciÃ³n.</param>
         /// <returns>string | ArgumentException: si el valor es nulo o vacio.</returns>
         string Encrypt(string value, TimeSpan? lifetime = null);
 
@@ -42,7 +42,7 @@ namespace Kitpymes.Core.Security.Encryptor
         /// Encripta un objeto.
         /// </summary>
         /// <param name="value">Objeto a encriptar.</param>
-        /// <param name="lifetime">Duración.</param>
+        /// <param name="lifetime">DuraciÃ³n.</param>
         /// <returns>string | ArgumentException: si el objeto es nulo.</returns>
         string Encrypt<T>(T value, TimeSpan? lifetime = null)
             where T : class;

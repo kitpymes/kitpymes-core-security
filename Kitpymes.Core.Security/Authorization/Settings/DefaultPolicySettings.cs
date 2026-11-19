@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="DefaultPolicySettings.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -8,26 +8,26 @@
 namespace Kitpymes.Core.Security.Authorization.Settings
 {
     /*
-        Clase para la configuración de la fecha de expiración DefaultPolicySettings
-        Contiene los métodos para la configuración de la fecha de expiración
+        Clase para la configuraciÃ³n de la fecha de expiraciÃ³n DefaultPolicySettings
+        Contiene los mÃ©todos para la configuraciÃ³n de la fecha de expiraciÃ³n
     */
 
     /// <summary>
-    /// Clase para la configuración de la fecha de expiración <c>DefaultPolicySettings</c>.
-    /// Contiene los métodos para la configuración de la fecha de expiración.
+    /// Clase para la configuraciÃ³n de la fecha de expiraciÃ³n <c>DefaultPolicySettings</c>.
+    /// Contiene los mÃ©todos para la configuraciÃ³n de la fecha de expiraciÃ³n.
     /// </summary>
     /// <remarks>
-    /// <para>En esta clase se pueden agregar todos los métodos para la configuración de la fecha de expiración.</para>
+    /// <para>En esta clase se pueden agregar todos los mÃ©todos para la configuraciÃ³n de la fecha de expiraciÃ³n.</para>
     /// </remarks>
     public class DefaultPolicySettings
     {
         /// <summary>
-        /// Valor por defecto que indica los minutos de expiración.
+        /// Valor por defecto que indica los minutos de expiraciÃ³n.
         /// </summary>
         public const bool DefaultRequiredSchemes = false;
 
         /// <summary>
-        /// Valor por defecto que indica los segundos de expiración.
+        /// Valor por defecto que indica los segundos de expiraciÃ³n.
         /// </summary>
         public const bool DefaultRequireAuthenticatedUser = false;
 
@@ -35,7 +35,7 @@ namespace Kitpymes.Core.Security.Authorization.Settings
         private bool _requireAuthenticatedUser = DefaultRequireAuthenticatedUser;
 
         /// <summary>
-        /// Obtiene o establece los minutos de expiración.
+        /// Obtiene o establece los minutos de expiraciÃ³n.
         /// <para><strong>Default:</strong> <see cref="DefaultRequiredSchemes"/> = 0.</para>
         /// </summary>
         public bool? RequiredSchemes
@@ -51,7 +51,7 @@ namespace Kitpymes.Core.Security.Authorization.Settings
         }
 
         /// <summary>
-        /// Obtiene o establece los segundos de expiración.
+        /// Obtiene o establece los segundos de expiraciÃ³n.
         /// <para><strong>Default:</strong> <see cref="DefaultRequireAuthenticatedUser"/> = 0.</para>
         /// </summary>
         public bool? RequireAuthenticatedUser

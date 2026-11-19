@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+Ôªø// -----------------------------------------------------------------------
 // <copyright file="CookiesOptions.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -11,21 +11,21 @@ using Kitpymes.Core.Security.Authentication;
 using Kitpymes.Core.Shared.Extensions;
 
 /*
-  Clase de configuraciÛn CookiesSettings
-  Contiene las propiedades para la configuraciÛn de la autenticaciÛn por cookies
+  Clase de configuraci√≥n CookiesSettings
+  Contiene las propiedades para la configuraci√≥n de la autenticaci√≥n por cookies
 */
 
 /// <summary>
-/// Clase de configuraciÛn <c>CookiesSettings</c>.
-/// Contiene las propiedades para la configuraciÛn de la autenticaciÛn por cookies.
+/// Clase de configuraci√≥n <c>CookiesSettings</c>.
+/// Contiene las propiedades para la configuraci√≥n de la autenticaci√≥n por cookies.
 /// </summary>
 /// <remarks>
-/// <para>En esta clase se pueden agregar todas las propiedades para la configuraciÛn de la autenticaciÛn por cookies.</para>
+/// <para>En esta clase se pueden agregar todas las propiedades para la configuraci√≥n de la autenticaci√≥n por cookies.</para>
 /// </remarks>
 public class CookiesOptions
 {
     /// <summary>
-    /// Obtiene la configuraciÛn de la autenticaciÛn por cookies.
+    /// Obtiene la configuraci√≥n de la autenticaci√≥n por cookies.
     /// </summary>
     public CookiesSettings CookiesSettings { get; private set; } = new CookiesSettings();
 
@@ -42,9 +42,9 @@ public class CookiesOptions
     }
 
     /// <summary>
-    /// Obtiene o establece el esquema de autenticaciÛn.
+    /// Obtiene o establece el esquema de autenticaci√≥n.
     /// </summary>
-    /// <param name="authenticateScheme">Nombre del esquema de autenticaciÛn.</param>
+    /// <param name="authenticateScheme">Nombre del esquema de autenticaci√≥n.</param>
     /// <returns>JsonWebTokenOptions | ArgumentException: si authenticateScheme es nulo o vacio.</returns>
     public CookiesOptions WithScheme(string authenticateScheme = CookiesSettings.DefaultAuthenticateScheme)
     {
@@ -66,9 +66,9 @@ public class CookiesOptions
     }
 
     /// <summary>
-    /// Obtiene o establece la configuraciÛn del tiempo de expiraciÛn de la cookie.
+    /// Obtiene o establece la configuraci√≥n del tiempo de expiraci√≥n de la cookie.
     /// </summary>
-    /// <param name="days">Valor en dÌas.</param>
+    /// <param name="days">Valor en d√≠as.</param>
     /// <param name="hours">Valor en horas.</param>
     /// <param name="minutes">Valor en minutos.</param>
     /// <param name="seconds">Valor en segundos.</param>
@@ -89,7 +89,7 @@ public class CookiesOptions
     /// <summary>
     /// Obtiene o establece un valor que indica si se vuelve a generar una nueva cookie cuando este por vencer.
     /// </summary>
-    /// <param name="enabled">Si se habilita o debalitia la generaciÛn de una nueva cookie cuando este por vencer.</param>
+    /// <param name="enabled">Si se habilita o debalitia la generaci√≥n de una nueva cookie cuando este por vencer.</param>
     /// <returns>CookiesOptions.</returns>
     public CookiesOptions WithSlidingExpiration(bool enabled = CookiesSettings.DefaultSlidingExpiration)
     {
@@ -99,7 +99,7 @@ public class CookiesOptions
     }
 
     /// <summary>
-    /// Obtiene o establece un valor que indica que no se puede acceder a la cookie a travÈs de JavaScript, solo estara disponible para el servidor.
+    /// Obtiene o establece un valor que indica que no se puede acceder a la cookie a trav√©s de JavaScript, solo estara disponible para el servidor.
     /// </summary>
     /// <param name="enabled">Si se habilita o debalitia el acceso a la cookie desde el navegador.</param>
     /// <returns>CookiesOptions.</returns>
@@ -111,9 +111,9 @@ public class CookiesOptions
     }
 
     /// <summary>
-    /// Obtiene o establece el path del inicio se sesiÛn.
+    /// Obtiene o establece el path del inicio se sesi√≥n.
     /// </summary>
-    /// <param name="loginPath">Path del inicio se sesiÛn.</param>
+    /// <param name="loginPath">Path del inicio se sesi√≥n.</param>
     /// <returns>CookiesOptions | ArgumentException: si loginPath es nulo o vacio.</returns>
     public CookiesOptions WithLoginPath(string loginPath)
     {
@@ -123,9 +123,9 @@ public class CookiesOptions
     }
 
     /// <summary>
-    /// Obtiene o establece el path del fin se sesiÛn.
+    /// Obtiene o establece el path del fin se sesi√≥n.
     /// </summary>
-    /// <param name="logoutPath">Path del fin se sesiÛn.</param>
+    /// <param name="logoutPath">Path del fin se sesi√≥n.</param>
     /// <returns>CookiesOptions | ArgumentException: si logoutPath es nulo o vacio.</returns>
     public CookiesOptions WithLogoutPath(string logoutPath)
     {
@@ -147,9 +147,9 @@ public class CookiesOptions
     }
 
     /// <summary>
-    /// Obtiene o establece los par·metros para el path de inicio o fin de sesiÛn.
+    /// Obtiene o establece los par√°metros para el path de inicio o fin de sesi√≥n.
     /// </summary>
-    /// <param name="returnUrlParameter">Par·metros para el path de inicio o fin de sesiÛn.</param>
+    /// <param name="returnUrlParameter">Par√°metros para el path de inicio o fin de sesi√≥n.</param>
     /// <returns>CookiesOptions | ArgumentException: si returnUrlParameter es nulo o vacio.</returns>
     public CookiesOptions WithReturnUrlParameter(string returnUrlParameter)
     {

@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="PoliciesSettings.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -10,16 +10,16 @@ namespace Kitpymes.Core.Security.Authorization.Settings;
 using System.Collections.Generic;
 
 /*
-    Clase para la configuración de la fecha de expiración PoliciesSettings
-    Contiene los métodos para la configuración de la fecha de expiración
+    Clase para la configuraciÃ³n de la fecha de expiraciÃ³n PoliciesSettings
+    Contiene los mÃ©todos para la configuraciÃ³n de la fecha de expiraciÃ³n
 */
 
 /// <summary>
-/// Clase para la configuración de la fecha de expiración <c>PoliciesSettings</c>.
-/// Contiene los métodos para la configuración de la fecha de expiración.
+/// Clase para la configuraciÃ³n de la fecha de expiraciÃ³n <c>PoliciesSettings</c>.
+/// Contiene los mÃ©todos para la configuraciÃ³n de la fecha de expiraciÃ³n.
 /// </summary>
 /// <remarks>
-/// <para>En esta clase se pueden agregar todos los métodos para la configuración de la fecha de expiración.</para>
+/// <para>En esta clase se pueden agregar todos los mÃ©todos para la configuraciÃ³n de la fecha de expiraciÃ³n.</para>
 /// </remarks>
 public class PoliciesSettings
 {

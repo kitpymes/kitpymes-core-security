@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="JsonWebTokenService.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -17,21 +17,21 @@ using Kitpymes.Core.Shared.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 /*
-    Clase para el token de sesión JsonWebTokenService
-    Contiene los métodos para el token de sesión
+    Clase para el token de sesiÃ³n JsonWebTokenService
+    Contiene los mÃ©todos para el token de sesiÃ³n
 */
 
 /// <summary>
-/// Clase para el token de sesión <c>JsonWebTokenService</c>.
-/// Contiene los métodos para el token de sesión.
+/// Clase para el token de sesiÃ³n <c>JsonWebTokenService</c>.
+/// Contiene los mÃ©todos para el token de sesiÃ³n.
 /// </summary>
 /// <remarks>
-/// <para>En esta clase se pueden agregar todos los métodos para el token de sesión.</para>
+/// <para>En esta clase se pueden agregar todos los mÃ©todos para el token de sesiÃ³n.</para>
 /// </remarks>
 /// <remarks>
 /// Inicializa una nueva instancia de la clase <see cref="JsonWebTokenService"/>.
 /// </remarks>
-/// <param name="settings">Configuración para el token de sesión.</param>
+/// <param name="settings">ConfiguraciÃ³n para el token de sesiÃ³n.</param>
 public class JsonWebTokenService(JsonWebTokenSettings settings)
     : IJsonWebTokenService
 {

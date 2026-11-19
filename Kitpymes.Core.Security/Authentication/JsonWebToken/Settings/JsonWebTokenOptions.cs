@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="JsonWebTokenOptions.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -12,21 +12,21 @@ using Kitpymes.Core.Security.Authorization.Settings;
 using Kitpymes.Core.Shared.Extensions;
 
 /*
-    Clase para las opciones del token de sesión JsonWebTokenOptions
-    Contiene las opciones para la configuración del token de sesión
+    Clase para las opciones del token de sesiÃ³n JsonWebTokenOptions
+    Contiene las opciones para la configuraciÃ³n del token de sesiÃ³n
 */
 
 /// <summary>
-/// Clase para las opciones del token de sesión <c>JsonWebTokenOptions</c>.
-/// Contiene las opciones para la configuración del token de sesión.
+/// Clase para las opciones del token de sesiÃ³n <c>JsonWebTokenOptions</c>.
+/// Contiene las opciones para la configuraciÃ³n del token de sesiÃ³n.
 /// </summary>
 /// <remarks>
-/// <para>En esta clase se pueden agregar todos los métodos para las opciones del token de sesión.</para>
+/// <para>En esta clase se pueden agregar todos los mÃ©todos para las opciones del token de sesiÃ³n.</para>
 /// </remarks>
 public class JsonWebTokenOptions
 {
     /// <summary>
-    /// Obtiene la configuración del token de sesión.
+    /// Obtiene la configuraciÃ³n del token de sesiÃ³n.
     /// </summary>
     public JsonWebTokenSettings JsonWebTokenSettings { get; private set; } = new JsonWebTokenSettings();
 
@@ -43,9 +43,9 @@ public class JsonWebTokenOptions
     }
 
     /// <summary>
-    /// Obtiene o establece el esquema de autenticación.
+    /// Obtiene o establece el esquema de autenticaciÃ³n.
     /// </summary>
-    /// <param name="authenticateScheme">Nombre del esquema de autenticación.</param>
+    /// <param name="authenticateScheme">Nombre del esquema de autenticaciÃ³n.</param>
     /// <param name="challengeScheme">Nombre del esquema de desafio.</param>
     /// <returns>JsonWebTokenOptions | ArgumentException: si authenticateScheme es nulo o vacio.</returns>
     public JsonWebTokenOptions WithScheme(string authenticateScheme = JsonWebTokenSettings.DefaultAuthenticateScheme, string challengeScheme = JsonWebTokenSettings.DefaultChallengeScheme)
@@ -57,10 +57,10 @@ public class JsonWebTokenOptions
     }
 
     /// <summary>
-    /// Obtiene o establece si se requiere HTTPS para la dirección o autoridad de metadatos.
+    /// Obtiene o establece si se requiere HTTPS para la direcciÃ³n o autoridad de metadatos.
     /// Esto debe desactivarse solo en entornos de desarrollo.
     /// </summary>
-    /// <param name="requireHttpsMetadata">Si se desea validar la vida útil del token.</param>
+    /// <param name="requireHttpsMetadata">Si se desea validar la vida Ãºtil del token.</param>
     /// <returns>JsonWebTokenOptions.</returns>
     public JsonWebTokenOptions WithRequireHttpsMetadata(bool requireHttpsMetadata = JsonWebTokenSettings.DefaultRequireHttpsMetadata)
     {
@@ -82,7 +82,7 @@ public class JsonWebTokenOptions
     }
 
     /// <summary>
-    /// Obtiene o establece si el token de portador debe almacenarse en Microsoft.AspNetCore.Authentication.AuthenticationProperties después de una autorización exitosa.
+    /// Obtiene o establece si el token de portador debe almacenarse en Microsoft.AspNetCore.Authentication.AuthenticationProperties despuÃ©s de una autorizaciÃ³n exitosa.
     /// </summary>
     /// <param name="saveToken">Si queremos que el token se guarde como propiedad.</param>
     /// <returns>JsonWebTokenOptions.</returns>
@@ -94,9 +94,9 @@ public class JsonWebTokenOptions
     }
 
     /// <summary>
-    /// Obtiene o establece si los errores de validación del token deben devolverse al cliente mediante el encabezado WWW-Authenticate.
+    /// Obtiene o establece si los errores de validaciÃ³n del token deben devolverse al cliente mediante el encabezado WWW-Authenticate.
     /// </summary>
-    /// <param name="includeErrorDetails">Si queremos que los errores de validación se devuelvan al cliente.</param>
+    /// <param name="includeErrorDetails">Si queremos que los errores de validaciÃ³n se devuelvan al cliente.</param>
     /// <returns>JsonWebTokenOptions.</returns>
     public JsonWebTokenOptions WithIncludeErrorDetails(bool includeErrorDetails = JsonWebTokenSettings.DefaultIncludeErrorDetails)
     {
@@ -106,9 +106,9 @@ public class JsonWebTokenOptions
     }
 
     /// <summary>
-    /// Valida la vida útil del token.
+    /// Valida la vida Ãºtil del token.
     /// </summary>
-    /// <param name="validateLifetime">Si se desea validar la vida útil del token.</param>
+    /// <param name="validateLifetime">Si se desea validar la vida Ãºtil del token.</param>
     /// <returns>JsonWebTokenOptions.</returns>
     public JsonWebTokenOptions WithValidateLifetime(bool validateLifetime = JsonWebTokenSettings.DefaultValidateLifetime)
     {
@@ -118,9 +118,9 @@ public class JsonWebTokenOptions
     }
 
     /// <summary>
-    /// Obtiene o establece la configuración del tiempo de expiración del token de sesión.
+    /// Obtiene o establece la configuraciÃ³n del tiempo de expiraciÃ³n del token de sesiÃ³n.
     /// </summary>
-    /// <param name="days">Valor en días.</param>
+    /// <param name="days">Valor en dÃ­as.</param>
     /// <param name="hours">Valor en horas.</param>
     /// <param name="minutes">Valor en minutos.</param>
     /// <param name="seconds">Valor en segundos.</param>
@@ -139,9 +139,9 @@ public class JsonWebTokenOptions
     }
 
     /// <summary>
-    /// Obtiene o establece la clave pública de sesión.
+    /// Obtiene o establece la clave pÃºblica de sesiÃ³n.
     /// </summary>
-    /// <param name="publicKey">Clave única.</param>
+    /// <param name="publicKey">Clave Ãºnica.</param>
     /// <returns>JsonWebTokenOptions | ArgumentException: si key es nulo o vacio.</returns>
     public JsonWebTokenOptions WithPublicKey(string publicKey)
     {
@@ -151,9 +151,9 @@ public class JsonWebTokenOptions
     }
 
     /// <summary>
-    /// Obtiene o establece la clave privada de sesión.
+    /// Obtiene o establece la clave privada de sesiÃ³n.
     /// </summary>
-    /// <param name="privateKey">Clave única.</param>
+    /// <param name="privateKey">Clave Ãºnica.</param>
     /// <returns>JsonWebTokenOptions | ArgumentException: si key es nulo o vacio.</returns>
     public JsonWebTokenOptions WithPrivateKey(string privateKey)
     {

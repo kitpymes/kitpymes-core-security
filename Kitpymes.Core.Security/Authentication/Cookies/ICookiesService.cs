@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+ï»¿// -----------------------------------------------------------------------
 // <copyright file="ICookiesService.cs" company="Kitpymes">
 // Copyright (c) Kitpymes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project docs folder for full license information.
@@ -28,15 +28,15 @@ namespace Kitpymes.Core.Security.Authentication.Cookies
     public interface ICookiesService
     {
         /// <summary>
-        /// Inicie sesión por medio de cookies.
+        /// Inicie sesiÃ³n por medio de cookies.
         /// </summary>
-        /// <param name="claims">Datos que queremos almacenar en la autenticación.</param>
-        /// <param name="options">Configuración de la autenticación.</param>
+        /// <param name="claims">Datos que queremos almacenar en la autenticaciÃ³n.</param>
+        /// <param name="options">ConfiguraciÃ³n de la autenticaciÃ³n.</param>
         /// <returns>Task.</returns>
         Task SignInAsync(IEnumerable<Claim> claims, Action<AuthenticationProperties>? options = null);
 
         /// <summary>
-        /// Cierra una sesión de cookies.
+        /// Cierra una sesiÃ³n de cookies.
         /// </summary>
         /// <returns>Task.</returns>
         Task SignOutAsync();
