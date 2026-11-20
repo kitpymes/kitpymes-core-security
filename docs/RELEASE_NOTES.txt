@@ -1,3 +1,18 @@
+# v.2.0.0
+Versión mayor: rompe a quien venga de la 1.0.5 (la última publicada en NuGet, .NET 7). Abajo, qué cambia y cómo migrar.
+
+- Requiere .NET 10 o superior.
+- Usa las librerías Kitpymes ya migradas desde NuGet (Shared 2.0.1, Api 2.0.0); quien la use debe migrar también esas (ver sus release notes).
+- El código pasa a github.com/kitpymes/kitpymes-core-security y el paquete se publica desde GitHub Actions.
+
+## Cambios incompatibles y cómo migrar desde 1.0.5
+
+1. Espacios de nombres: antes todo estaba en Kitpymes.Core.Security. Ahora hay espacios por función: Authentication (Cookies, JsonWebToken, OAuth, cada uno con Extensions y Settings), Authorization (Requirements y Settings), Encryptor y Password (cada uno con Extensions y Settings).
+
+2. Autorización (nuevo): AuthorizationSettings, PoliciesSettings y DefaultPolicySettings, requisitos por permiso y por rol (PermissionRequirement, RoleRequirement) y AuthorizationCollectionExtensions / AuthorizationApplicationBuilderExtensions para registrarla.
+
+3. Eliminado: UnauthorizedAccessMiddleware.
+
 # v.1.0.5
 - Se migra de la versión net5 a net7.
 - Se actualizan librerías.
