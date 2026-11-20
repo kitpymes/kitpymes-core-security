@@ -70,9 +70,13 @@ public static class EncryptorServiceCollectionExtensions
 
                 x.SetApplicationName(config.ApplicationName!);
 
-#pragma warning disable CA1416 // Validar la compatibilidad de la plataforma
-                x.ProtectKeysWithDpapi();
-#pragma warning restore CA1416 // Validar la compatibilidad de la plataforma
+                // DPAPI sólo existe en Windows: en Linux (contenedores, App Service Linux) lanzaba
+                // PlatformNotSupportedException. Fuera de Windows las claves se guardan sin cifrar
+                // en PersistKeysToFileSystem; protege esa carpeta.
+                if (OperatingSystem.IsWindows())
+                {
+                    x.ProtectKeysWithDpapi();
+                }
 
                 x.SetDefaultKeyLifetime(TimeSpan.FromDays(config.KeyLifetimeFromDays!.Value));
 

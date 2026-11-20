@@ -13,6 +13,10 @@ Versión mayor: rompe a quien venga de la 1.0.5 (la última publicada en NuGet, 
 
 3. Eliminado: UnauthorizedAccessMiddleware.
 
+4. Cifrado (Encryptor) fuera de Windows
+   - Antes, ProtectKeysWithDpapi se aplicaba siempre y en Linux lanzaba PlatformNotSupportedException. Ahora sólo se aplica en Windows; en Linux las claves se guardan sin cifrar en la carpeta de PersistKeysToFileSystem, que hay que proteger.
+   - La carpeta por defecto pasa de "bin\keys" a "bin/keys" (en Linux se creaba una carpeta llamada literalmente "bin\keys").
+
 # v.1.0.5
 - Se migra de la versión net5 a net7.
 - Se actualizan librerías.
