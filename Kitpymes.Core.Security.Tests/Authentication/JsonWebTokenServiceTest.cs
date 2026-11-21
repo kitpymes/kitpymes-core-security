@@ -38,13 +38,13 @@ namespace Kitypmes.Core.Security.Tests
         [TestMethod]
         public void JsonWebTokenOptions_Passing_Empties_Settings_Returns_SharedException_GetAuthJsonWebToken()
         {
-            Assert.ThrowsException<SharedException>(() => services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(x => { }))).GetAuthJsonWebToken());
+            Assert.ThrowsExactly<SharedException>(() => services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(x => { }))).GetAuthJsonWebToken());
         }
 
         [TestMethod]
         public void JsonWebTokenOptions_Passing_Enabled_Settings_Returns_SharedException()
         {
-            Assert.ThrowsException<SharedException>(() => services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(x => x.WithEnabled()))));
+            Assert.ThrowsExactly<SharedException>(() => services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(x => x.WithEnabled()))));
         }
 
         [TestMethod]
@@ -63,7 +63,7 @@ namespace Kitypmes.Core.Security.Tests
 
             var claims = new List<Claim>();
 
-            Assert.ThrowsException<SharedException>(() => _jsonWebTokenService.Create(claims));
+            Assert.ThrowsExactly<SharedException>(() => _jsonWebTokenService.Create(claims));
         }
 
         [TestMethod] 
@@ -268,13 +268,13 @@ namespace Kitypmes.Core.Security.Tests
         [TestMethod]
         public void JsonWebTokenSettings_Passing_Empties_Settings_Returns_SharedException_GetAuthJsonWebToken()
         {
-            Assert.ThrowsException<SharedException>(() => services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(new JsonWebTokenSettings()))).GetAuthJsonWebToken());
+            Assert.ThrowsExactly<SharedException>(() => services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(new JsonWebTokenSettings()))).GetAuthJsonWebToken());
         }
 
         [TestMethod]
         public void JsonWebTokenSettings_Passing_Enabled_Settings_Returns_SharedException()
         {
-            Assert.ThrowsException<SharedException>(() => services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(new JsonWebTokenSettings 
+            Assert.ThrowsExactly<SharedException>(() => services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(new JsonWebTokenSettings 
             {
                  Enabled = true
             }))));
@@ -306,7 +306,7 @@ namespace Kitypmes.Core.Security.Tests
 
             var claims = new List<Claim>();
 
-            Assert.ThrowsException<SharedException>(() => _jsonWebTokenService.Create(claims));
+            Assert.ThrowsExactly<SharedException>(() => _jsonWebTokenService.Create(claims));
         }
 
         [TestMethod]

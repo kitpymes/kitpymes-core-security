@@ -59,7 +59,7 @@ namespace Kitypmes.Core.Security.Tests
             // 3 segundos para que expire.
             Thread.Sleep(3000);
 
-            Assert.ThrowsException<CryptographicException>(() => _encryptorService.Decrypt(encrypt));
+            Assert.ThrowsExactly<CryptographicException>(() => _encryptorService.Decrypt(encrypt));
         }
 
         [TestMethod]
