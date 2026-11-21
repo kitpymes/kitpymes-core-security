@@ -29,7 +29,7 @@ namespace Kitypmes.Core.Security.Tests
 
         #region DefaultSettings
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Password")]
         [DataRow(nameof(PasswordServiceTest))]
         public void DefaultSettings_Passing_Valid_Value_Returns_HasErrorsAndErrors(string plainPassword)
@@ -43,7 +43,7 @@ namespace Kitypmes.Core.Security.Tests
             Assert.IsTrue(isValid);
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Passw")]
         [DataRow("1a_e")]
         public void DefaultSettings_Passing_Invalid_Value_Returns_HasErrorsAndErrors(string plainPassword)
@@ -59,7 +59,7 @@ namespace Kitypmes.Core.Security.Tests
 
         #region AppSettings
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Password")]
         [DataRow(nameof(PasswordServiceTest))]
         public void AppSettings_Passing_Valid_Value_Returns_HasErrorsAndErrors(string plainPassword)
@@ -89,7 +89,7 @@ namespace Kitypmes.Core.Security.Tests
 
         #region RequireDigit
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Password")]
         [DataRow(nameof(PasswordServiceTest))]
         public void RequireDigit_Passing_Invalid_Value_Returns_HasErrorsAndErrors(string plainPassword)
@@ -106,7 +106,7 @@ namespace Kitypmes.Core.Security.Tests
 
         #region RequiredMinLength
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Password")]
         [DataRow(nameof(PasswordServiceTest))]
         public void RequiredMinLength_Passing_Invalid_Value_Returns_HasErrorsAndErrors(string plainPassword)
@@ -123,7 +123,7 @@ namespace Kitypmes.Core.Security.Tests
 
         #region RequiredUniqueChars
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Password")]
         [DataRow(nameof(PasswordServiceTest))]
         public void RequiredUniqueChars_Passing_Invalid_Value_Returns_HasErrorsAndErrors(string plainPassword)
@@ -140,7 +140,7 @@ namespace Kitypmes.Core.Security.Tests
 
         #region RequireEspecialCharacters
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Password")]
         [DataRow(nameof(PasswordServiceTest))]
         public void RequireEspecialCharacters_Passing_Invalid_Value_Returns_HasErrorsAndErrors(string plainPassword)
@@ -157,7 +157,7 @@ namespace Kitypmes.Core.Security.Tests
 
         #region RequireLowercase
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("PASSWORD")]
         public void RequireLowercase_Passing_Invalid_Value_Returns_HasErrorsAndErrors(string plainPassword)
         {
@@ -173,7 +173,7 @@ namespace Kitypmes.Core.Security.Tests
 
         #region RequireUppercase
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("password")]
         public void RequireUppercase_Passing_Invalid_Value_Returns_HasErrorsAndErrors(string plainPassword)
         {
