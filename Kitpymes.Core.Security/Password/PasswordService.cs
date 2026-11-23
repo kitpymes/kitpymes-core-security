@@ -81,29 +81,20 @@ public class PasswordService(PasswordSettings settings)
             passwordBuilder.Append(uniqueChars);
         }
 
-        if (PasswordSettings.RequiredMinLength.HasValue)
+        // Sólo se rellena si los caracteres obligatorios no llegan a la longitud mínima. Antes, si ya llegaban,
+        // la contraseña se añadía otra vez a sí misma: salía duplicada y, con caracteres únicos, null.
+        if (PasswordSettings.RequiredMinLength.HasValue && PasswordSettings.RequiredMinLength.Value > passwordBuilder.Length)
         {
-            var requiredMinLength = PasswordSettings.RequiredMinLength.Value;
+            var length = PasswordSettings.RequiredMinLength.Value - passwordBuilder.Length;
 
-            string? minLength;
+            const string chars = "0123456789ABCDEFGHJKLMNOPQRSTUVWabcdefghijklmnopqrstuvw";
 
-            if (requiredMinLength > passwordBuilder.Length)
-            {
-                var length = requiredMinLength - passwordBuilder.Length;
+            // Con caracteres únicos, el relleno al azar podía repetir uno ya usado y CreateRandom devolvía null.
+            var fill = PasswordSettings.RequiredUniqueChars == true
+                ? ToRandomUnique(chars, length, passwordBuilder.ToString())
+                : chars.ToRandom(length);
 
-                const string chars = "0123456789ABCDEFGHJKLMNOPQRSTUVWabcdefghijklmnopqrstuvw";
-
-                // Con caracteres únicos, el relleno al azar podía repetir uno ya usado y CreateRandom devolvía null.
-                minLength = PasswordSettings.RequiredUniqueChars == true
-                    ? ToRandomUnique(chars, length, passwordBuilder.ToString())
-                    : chars.ToRandom(length);
-            }
-            else
-            {
-                minLength = passwordBuilder.ToString();
-            }
-
-            passwordBuilder.Append(minLength);
+            passwordBuilder.Append(fill);
         }
 
         var plainPassword = passwordBuilder.ToString();

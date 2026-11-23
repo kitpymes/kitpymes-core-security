@@ -261,6 +261,60 @@ namespace Kitypmes.Core.Security.Tests
             }
         }
 
+        [TestMethod]
+        public void CreateRandom_WithMinLengthBelowRequiredChars_Returns_RequiredChars_NotDuplicated()
+        {
+            // Con la longitud mínima ya alcanzada por los caracteres obligatorios, la contraseña se añadía otra vez a sí misma
+            // y salía del doble de largo (por ejemplo "1@aB1@aB").
+            Action<PasswordOptions> options = x => x.WithEnabled()
+                .WithRequireDigit()
+                .WithRequiredMinLength(3)
+                .WithRequireEspecialCharacters()
+                .WithRequireLowercase()
+                .WithRequireUppercase();
+
+            var passwordService = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            for (var i = 0; i < 100; i++)
+            {
+                var plainPassword = passwordService.CreateRandom();
+
+                Assert.IsNotNull(plainPassword);
+                Assert.AreEqual(4, plainPassword.Length);
+                Assert.IsTrue(plainPassword.Any(char.IsDigit));
+                Assert.IsTrue(plainPassword.Any(char.IsLower));
+                Assert.IsTrue(plainPassword.Any(char.IsUpper));
+                Assert.IsTrue(plainPassword.Any(x => !char.IsLetterOrDigit(x)));
+            }
+        }
+
+        [TestMethod]
+        [DataRow(1)]
+        [DataRow(5)]
+        public void CreateRandom_WithRequiredUniqueCharsAndMinLengthReached_Returns_UniqueChars(int requiredMinLength)
+        {
+            // Con caracteres únicos y la longitud mínima ya alcanzada, la contraseña duplicada repetía todos sus caracteres
+            // y CreateRandom devolvía siempre null.
+            Action<PasswordOptions> options = x => x.WithEnabled()
+                .WithRequireDigit()
+                .WithRequiredMinLength(requiredMinLength)
+                .WithRequiredUniqueChars()
+                .WithRequireEspecialCharacters()
+                .WithRequireLowercase()
+                .WithRequireUppercase();
+
+            var passwordService = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            for (var i = 0; i < 100; i++)
+            {
+                var plainPassword = passwordService.CreateRandom();
+
+                Assert.IsNotNull(plainPassword);
+                Assert.AreEqual(5, plainPassword.Length);
+                Assert.AreEqual(plainPassword.Length, plainPassword.Distinct().Count());
+            }
+        }
+
         #endregion CreateRandom
     }
 }
