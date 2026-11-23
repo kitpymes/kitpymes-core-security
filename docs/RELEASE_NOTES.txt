@@ -1,3 +1,9 @@
+# v.2.1.1
+Parche: corrige un fallo de la generación de contraseñas, sin cambiar la API pública.
+Corrección de un fallo: CreateRandom duplicaba la contraseña cuando los caracteres obligatorios (dígito, especial, minúscula, mayúscula y el de caracteres únicos) ya llegaban a RequiredMinLength. Salía del doble de largo y con cada carácter repetido (por ejemplo "1@aB1@aB"), y con RequiredUniqueChars devolvía siempre null. Ahora sólo se rellena cuando falta longitud, así que la contraseña tiene exactamente los caracteres obligatorios.
+- Afecta a quien configura una longitud mínima menor o igual que el número de requisitos activos. Con una longitud mínima mayor, el resultado no cambia.
+- Si alguien guardaba o comparaba la longitud de las contraseñas generadas con esa configuración, ahora es la mitad.
+
 # v.2.1.0
 Versión menor y no parche: corrige vulnerabilidades y un fallo sin cambiar la API pública, pero hereda el cambio de comportamiento de Kitpymes.Core.Logger 2.1.0 (abajo).
 Corrección de seguridad: Kitpymes.Core.Api 2.0.0, a través de Kitpymes.Core.Logger 2.0.0, traía dependencias con vulnerabilidades conocidas, que heredaba quien instalaba Security.
