@@ -1,8 +1,9 @@
-# v.2.0.1
+# v.2.1.0
+Versión menor y no parche: corrige vulnerabilidades sin cambiar la API pública, pero hereda el cambio de comportamiento de Kitpymes.Core.Logger 2.1.0 (abajo).
 Corrección de seguridad: Kitpymes.Core.Api 2.0.0, a través de Kitpymes.Core.Logger 2.0.0, traía dependencias con vulnerabilidades conocidas, que heredaba quien instalaba Security.
 - Alta: Microsoft.Data.SqlClient 5.0.1 (GHSA-98g6-xh36-x2p7) y Azure.Identity 1.6.0 (GHSA-5mfx-4wcx-rv27). Moderada: Azure.Identity (GHSA-wvxc-855f-jvrv, GHSA-m5vv-6r4h-3vj9), MailKit 2.6.0 (GHSA-9j88-vvj5-vhgr) y MimeKit 2.6.0 (GHSA-g7hc-96xr-gvvx).
-- Pasa a Kitpymes.Core.Api 2.0.1 (que usa Kitpymes.Core.Logger 2.1.0), que las corrige.
-- Sin cambios en la API pública ni en el código de Security. El log por email de Logger cambia de comportamiento en la 2.1.0 (ver sus release notes): Serilog 4.x y MailKit 4.x dentro del paquete y reintento de los lotes que fallan.
+- Pasa a Kitpymes.Core.Api 2.1.0 (que usa Kitpymes.Core.Logger 2.1.0), que las corrige.
+- Sin cambios en la API pública ni en el código de Security. El log por email de Logger cambia de comportamiento en la 2.1.0 (ver sus release notes): quien instala Security recibe Serilog 4.x y MailKit 4.x como dependencias transitivas (NU1605 si fijaba Serilog 3.x o MailKit 2.x) y los lotes que fallan se reintentan de los lotes que fallan.
 
 # v.2.0.0
 Versión mayor: rompe a quien venga de la 1.0.5 (la última publicada en NuGet, .NET 7). Abajo, qué cambia y cómo migrar.
