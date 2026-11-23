@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)Kitpymes.Core.Security\Kitpymes.Core.Security.csproj" />
+    <ProjectReference Include="$(KitpymesRoot)Kitpymes.Core.Security\Kitpymes.Core.Security.csproj" />
   </ItemGroup>
 
   <ItemGroup>
