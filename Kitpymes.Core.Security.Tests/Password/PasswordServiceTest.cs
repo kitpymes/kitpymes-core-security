@@ -238,7 +238,7 @@ namespace Kitypmes.Core.Security.Tests
         public void CreateRandom_WithRequiredUniqueChars_Returns_UniqueChars_Always()
         {
             // El relleno al azar hasta la longitud mínima podía repetir un carácter ya usado y CreateRandom devolvía null
-            // (más o menos una de cada diez veces con esta configuración): 1000 intentos lo destapan siempre.
+            // (una de cada ocho veces con esta configuración): 1000 intentos lo destapan siempre.
             var expectedMinLength = 7;
 
             Action<PasswordOptions> options = x => x.WithEnabled()
