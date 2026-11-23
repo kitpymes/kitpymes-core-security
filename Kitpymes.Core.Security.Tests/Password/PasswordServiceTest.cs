@@ -234,6 +234,33 @@ namespace Kitypmes.Core.Security.Tests
             Assert.AreEqual(expectedMinLength, plainPassword?.Length);
         }
 
+        [TestMethod]
+        public void CreateRandom_WithRequiredUniqueChars_Returns_UniqueChars_Always()
+        {
+            // El relleno al azar hasta la longitud mínima podía repetir un carácter ya usado y CreateRandom devolvía null
+            // (más o menos una de cada diez veces con esta configuración): 1000 intentos lo destapan siempre.
+            var expectedMinLength = 7;
+
+            Action<PasswordOptions> options = x => x.WithEnabled()
+                .WithRequireDigit()
+                .WithRequiredMinLength(expectedMinLength)
+                .WithRequiredUniqueChars()
+                .WithRequireEspecialCharacters()
+                .WithRequireLowercase()
+                .WithRequireUppercase();
+
+            var passwordService = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            for (var i = 0; i < 1000; i++)
+            {
+                var plainPassword = passwordService.CreateRandom();
+
+                Assert.IsNotNull(plainPassword);
+                Assert.AreEqual(expectedMinLength, plainPassword.Length);
+                Assert.AreEqual(plainPassword.Length, plainPassword.Distinct().Count());
+            }
+        }
+
         #endregion CreateRandom
     }
 }
