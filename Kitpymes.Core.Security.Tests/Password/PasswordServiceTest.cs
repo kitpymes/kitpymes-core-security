@@ -262,13 +262,33 @@ namespace Kitypmes.Core.Security.Tests
         }
 
         [TestMethod]
-        public void CreateRandom_WithMinLengthBelowRequiredChars_Returns_RequiredChars_NotDuplicated()
+        public void CreateRandom_WithLongMinLength_Returns_RequiredMinLength()
+        {
+            // Sin caracteres únicos, el relleno puede repetir caracteres: una longitud mayor que los caracteres disponibles
+            // (55) tiene que salir entera.
+            Action<PasswordOptions> options = x => x.WithEnabled()
+                .WithRequireDigit()
+                .WithRequiredMinLength(100)
+                .WithRequireLowercase();
+
+            var passwordService = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            var plainPassword = passwordService.CreateRandom();
+
+            Assert.IsNotNull(plainPassword);
+            Assert.AreEqual(100, plainPassword.Length);
+        }
+
+        [TestMethod]
+        [DataRow(3)]
+        [DataRow(4)]
+        public void CreateRandom_WithMinLengthReachedByRequiredChars_Returns_RequiredChars_NotDuplicated(int requiredMinLength)
         {
             // Con la longitud mínima ya alcanzada por los caracteres obligatorios, la contraseña se añadía otra vez a sí misma
             // y salía del doble de largo (por ejemplo "1@aB1@aB").
             Action<PasswordOptions> options = x => x.WithEnabled()
                 .WithRequireDigit()
-                .WithRequiredMinLength(3)
+                .WithRequiredMinLength(requiredMinLength)
                 .WithRequireEspecialCharacters()
                 .WithRequireLowercase()
                 .WithRequireUppercase();
