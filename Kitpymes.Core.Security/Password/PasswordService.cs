@@ -91,7 +91,12 @@ public class PasswordService(PasswordSettings settings)
             {
                 var length = requiredMinLength - passwordBuilder.Length;
 
-                minLength = "0123456789ABCDEFGHJKLMNOPQRSTUVWabcdefghijklmnopqrstuvw".ToRandom(length);
+                const string chars = "0123456789ABCDEFGHJKLMNOPQRSTUVWabcdefghijklmnopqrstuvw";
+
+                // Con caracteres únicos, el relleno al azar podía repetir uno ya usado y CreateRandom devolvía null.
+                minLength = PasswordSettings.RequiredUniqueChars == true
+                    ? ToRandomUnique(chars, length, passwordBuilder.ToString())
+                    : chars.ToRandom(length);
             }
             else
             {
@@ -215,6 +220,30 @@ public class PasswordService(PasswordSettings settings)
         buffer[offset + 1] = (byte)(value >> 16);
         buffer[offset + 2] = (byte)(value >> 8);
         buffer[offset + 3] = (byte)(value >> 0);
+    }
+
+    /// <summary>
+    /// Elige al azar, sin repetir, caracteres de <paramref name="chars"/> que no estén en <paramref name="used"/>.
+    /// Si no hay bastantes, devuelve todos los disponibles.
+    /// </summary>
+    /// <param name="chars">Caracteres entre los que elegir.</param>
+    /// <param name="length">Cantidad de caracteres que se quieren.</param>
+    /// <param name="used">Caracteres que ya tiene la contraseña.</param>
+    /// <returns>Los caracteres elegidos.</returns>
+    private static string ToRandomUnique(string chars, int length, string used)
+    {
+        var available = chars.Distinct().Where(x => !used.Contains(x, StringComparison.Ordinal)).ToArray();
+
+        var count = Math.Min(length, available.Length);
+
+        for (var i = 0; i < count; i++)
+        {
+            var j = RandomNumberGenerator.GetInt32(i, available.Length);
+
+            (available[i], available[j]) = (available[j], available[i]);
+        }
+
+        return new string(available, 0, count);
     }
 
     private static byte[] CreateSalt(int saltLength)
