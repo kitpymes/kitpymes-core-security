@@ -6,7 +6,7 @@
   <ItemGroup>
     <PackageReference Include="Kitpymes.Core.Shared" Version="2.0.1" />
 
-    <PackageReference Include="Kitpymes.Core.Api" Version="2.0.1" />
+    <PackageReference Include="Kitpymes.Core.Api" Version="2.1.0" />
   </ItemGroup>
 
   <ItemGroup>
