@@ -81,8 +81,7 @@ public class PasswordService(PasswordSettings settings)
             passwordBuilder.Append(uniqueChars);
         }
 
-        // Sólo se rellena si los caracteres obligatorios no llegan a la longitud mínima. Antes, si ya llegaban,
-        // la contraseña se añadía otra vez a sí misma: salía duplicada y, con caracteres únicos, null.
+        // Sólo se rellena si los caracteres obligatorios no llegan a la longitud mínima.
         if (PasswordSettings.RequiredMinLength.HasValue && PasswordSettings.RequiredMinLength.Value > passwordBuilder.Length)
         {
             var length = PasswordSettings.RequiredMinLength.Value - passwordBuilder.Length;
