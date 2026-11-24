@@ -19,7 +19,25 @@ namespace Kitypmes.Core.Security.Tests
     [TestClass]
     public class EncryptorConfigurationTest
     {
-        private static string NewDirectory() => Path.Combine(Path.GetTempPath(), "kitpymes-keys-" + Guid.NewGuid().ToString("N"));
+        private readonly List<string> directories = new();
+
+        private string NewDirectory()
+        {
+            var directory = Path.Combine(Path.GetTempPath(), "kitpymes-keys-" + Guid.NewGuid().ToString("N"));
+
+            directories.Add(directory);
+
+            return directory;
+        }
+
+        [TestCleanup]
+        public void TestCleanup()
+        {
+            foreach (var directory in directories.Where(Directory.Exists))
+            {
+                Directory.Delete(directory, true);
+            }
+        }
 
         private static IEncryptorService LoadEncryptor(string applicationName, string directory, int keyLifetimeFromDays = 30)
             => new ServiceCollection()
