@@ -980,12 +980,13 @@ namespace Kitypmes.Core.Security.Tests
         [TestMethod]
         public void CreateRandom_WithRequiredUniqueChars_Returns_RandomFill()
         {
-            // El relleno sin repetidos se elige al azar: sin barajar saldría siempre el mismo.
+            // Los caracteres del relleno sin repetidos se eligen al azar, no sólo su orden: se comparan los conjuntos
+            // (ordenados), porque el barajado final cambiaría el orden aunque se eligieran siempre los mismos.
             Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredUniqueChars().WithRequiredMinLength(20);
             var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
 
             var fills = Enumerable.Range(0, 10)
-                .Select(_ => service.CreateRandom())
+                .Select(_ => new string(service.CreateRandom()!.OrderBy(c => c).ToArray()))
                 .Distinct()
                 .Count();
 
