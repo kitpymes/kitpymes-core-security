@@ -121,32 +121,11 @@ public static class JsonWebTokenServiceCollectionExtensions
                         ClockSkew = TimeSpan.Zero,
                     };
 
+                    // Los eventos que no se nombran se quedan con el comportamiento por defecto (no hacen nada).
                     options.Events = new JwtBearerEvents
                     {
-                        OnChallenge = async context =>
-                        {
-                            await Task.CompletedTask;
-
-                            throw new UnauthorizedAccessException(context.ToDetails());
-                        },
-                        OnAuthenticationFailed = async context =>
-                        {
-                            await Task.CompletedTask;
-
-                            throw new UnauthorizedAccessException(context.ToDetails());
-                        },
-                        OnMessageReceived = async context =>
-                        {
-                            await Task.CompletedTask;
-                        },
-                        OnTokenValidated = async context =>
-                        {
-                            await Task.CompletedTask;
-                        },
-                        OnForbidden = async context =>
-                        {
-                            await Task.CompletedTask;
-                        },
+                        OnChallenge = context => Task.FromException(new UnauthorizedAccessException(context.ToDetails())),
+                        OnAuthenticationFailed = context => Task.FromException(new UnauthorizedAccessException(context.ToDetails())),
                     };
                 });
 

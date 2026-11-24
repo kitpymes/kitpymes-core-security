@@ -25,7 +25,7 @@ using Microsoft.AspNetCore.DataProtection;
 /// </remarks>
 public class EncryptorService : IEncryptorService
 {
-    private readonly IDataProtector? _protector;
+    private readonly IDataProtector _protector;
 
     /// <summary>
     /// Inicializa una nueva instancia de la clase <see cref="EncryptorService"/>.
@@ -41,8 +41,6 @@ public class EncryptorService : IEncryptorService
     /// <inheritdoc/>
     public string Encrypt(string value, TimeSpan? lifetime = null)
     {
-        _protector.ToThrowIfNullOrEmpty();
-
         value.ToThrowIfNullOrEmpty();
 
         if (lifetime.HasValue)
@@ -56,8 +54,6 @@ public class EncryptorService : IEncryptorService
     /// <inheritdoc/>
     public string Decrypt(string value)
     {
-        _protector.ToThrowIfNullOrEmpty();
-
         value.ToThrowIfNullOrEmpty();
 
         return _protector.Unprotect(value);
