@@ -187,6 +187,180 @@ namespace Kitypmes.Core.Security.Tests
 
         #endregion RequireUppercase
 
+        #region Verify
+
+        private const string PlainPassword = "Password";
+
+        private static PasswordService CreateDefaultService()
+        {
+            Action<PasswordOptions> options = x => x.WithEnabled();
+
+            return new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+        }
+
+        private static byte[] CreateDecodedHash(PasswordService service)
+        {
+            var (hashPassword, errors) = service.Create(PlainPassword);
+
+            Assert.AreEqual(0, errors.Count);
+            Assert.IsNotNull(hashPassword);
+
+            return Convert.FromBase64String(hashPassword);
+        }
+
+        private static void WriteNetworkByteOrder(byte[] buffer, int offset, uint value)
+        {
+            buffer[offset + 0] = (byte)(value >> 24);
+            buffer[offset + 1] = (byte)(value >> 16);
+            buffer[offset + 2] = (byte)(value >> 8);
+            buffer[offset + 3] = (byte)value;
+        }
+
+        [TestMethod]
+        [DataRow("password")]
+        [DataRow("Passwore")]
+        [DataRow("PasswordX")]
+        [DataRow("Passwor")]
+        public void Verify_Passing_WrongPassword_Returns_False(string wrongPassword)
+        {
+            var service = CreateDefaultService();
+
+            var (hashPassword, _) = service.Create(PlainPassword);
+
+            Assert.IsTrue(service.Verify(PlainPassword, hashPassword));
+            Assert.IsFalse(service.Verify(wrongPassword, hashPassword));
+        }
+
+        [TestMethod]
+        public void Verify_Passing_HashWithAnyByteChanged_Returns_False()
+        {
+            // Cambiar cualquier byte (marca, cabecera, sal o clave derivada) tiene que dar false.
+            var service = CreateDefaultService();
+
+            var decoded = CreateDecodedHash(service);
+
+            for (var i = 0; i < decoded.Length; i++)
+            {
+                var changed = (byte[])decoded.Clone();
+
+                changed[i] ^= 0x01;
+
+                Assert.IsFalse(service.Verify(PlainPassword, Convert.ToBase64String(changed)), $"Byte {i} cambiado.");
+            }
+        }
+
+        [TestMethod]
+        [DataRow(null)]
+        [DataRow("")]
+        [DataRow("   ")]
+        public void Verify_Passing_NullOrEmptyHash_Returns_False(string? hashPassword)
+        {
+            // Hasta la 2.1.1 lanzaba SharedException.
+            var service = CreateDefaultService();
+
+            Assert.IsFalse(service.Verify(PlainPassword, hashPassword));
+        }
+
+        [TestMethod]
+        [DataRow(null)]
+        [DataRow("")]
+        public void Verify_Passing_NullOrEmptyPassword_Returns_False(string? plainPassword)
+        {
+            var service = CreateDefaultService();
+
+            var (hashPassword, _) = service.Create(PlainPassword);
+
+            Assert.IsFalse(service.Verify(plainPassword, hashPassword));
+        }
+
+        [TestMethod]
+        [DataRow("no es base64")]
+        [DataRow("AA==")]
+        [DataRow("wA==")]
+        [DataRow("wAAAAAE=")]
+        public void Verify_Passing_MalformedHash_Returns_False(string hashPassword)
+        {
+            // Texto que no es base64, un solo byte (0x00 y la marca 0xC0) y una cabecera cortada.
+            var service = CreateDefaultService();
+
+            Assert.IsFalse(service.Verify(PlainPassword, hashPassword));
+        }
+
+        [TestMethod]
+        [DataRow(1)]
+        [DataRow(13)]
+        [DataRow(29)]
+        [DataRow(-1)]
+        public void Verify_Passing_TruncatedOrExtendedHash_Returns_False(int length)
+        {
+            // Hash cortado (sólo la marca, sólo la cabecera, sin parte de la clave) o con un byte de más.
+            var service = CreateDefaultService();
+
+            var decoded = CreateDecodedHash(service);
+
+            var changed = length > 0 ? decoded.Take(length).ToArray() : decoded.Append((byte)0).ToArray();
+
+            Assert.IsFalse(service.Verify(PlainPassword, Convert.ToBase64String(changed)));
+        }
+
+        [TestMethod]
+        [DataRow(0u)]
+        [DataRow(2u)]
+        [DataRow(3u)]
+        [DataRow(7u)]
+        [DataRow(uint.MaxValue)]
+        public void Verify_Passing_HashOfOtherOrUnknownAlgorithm_Returns_False(uint algorithm)
+        {
+            // Con la configuración por defecto (HMACSHA256, código 1), un hash marcado como HMACSHA1 (0) o HMACSHA512 (2)
+            // no vale, y un código desconocido es un hash mal formado. Hasta la 2.1.1, un código desconocido se tomaba
+            // como HMACSHA256 y el hash se aceptaba.
+            var service = CreateDefaultService();
+
+            var decoded = CreateDecodedHash(service);
+
+            WriteNetworkByteOrder(decoded, 1, algorithm);
+
+            Assert.IsFalse(service.Verify(PlainPassword, Convert.ToBase64String(decoded)));
+        }
+
+        [TestMethod]
+        public void Verify_Passing_HashWithOtherIterCountOrSaltLength_Returns_False()
+        {
+            var service = CreateDefaultService();
+
+            var iterCount = CreateDecodedHash(service);
+            WriteNetworkByteOrder(iterCount, 5, (uint)EncryptionSettings.DefaultIterCount + 1);
+
+            var saltLength = CreateDecodedHash(service);
+            WriteNetworkByteOrder(saltLength, 9, (uint)EncryptionSettings.DefaultSaltLength + 1);
+
+            Assert.IsFalse(service.Verify(PlainPassword, Convert.ToBase64String(iterCount)));
+            Assert.IsFalse(service.Verify(PlainPassword, Convert.ToBase64String(saltLength)));
+        }
+
+        [TestMethod]
+        public void Verify_Passing_HashCreatedWithOtherAlgorithm_Returns_False()
+        {
+            // Un hash bueno hecho con HMACSHA512 no vale para un servicio configurado con HMACSHA256, ni al revés.
+            Action<PasswordOptions> sha512 = x => x.WithEnabled();
+            var sha512Settings = sha512.ToConfigureOrDefault().PasswordSettings;
+            sha512Settings.EncryptionSettings.KeyDerivationAlgorithm = 2;
+            sha512Settings.EncryptionSettings.AlgorithmName = "SHA512";
+            var sha512Service = new PasswordService(sha512Settings);
+
+            var service = CreateDefaultService();
+
+            var (sha512Hash, sha512Errors) = sha512Service.Create(PlainPassword);
+            var (sha256Hash, _) = service.Create(PlainPassword);
+
+            Assert.AreEqual(0, sha512Errors.Count);
+            Assert.IsTrue(sha512Service.Verify(PlainPassword, sha512Hash));
+            Assert.IsFalse(service.Verify(PlainPassword, sha512Hash));
+            Assert.IsFalse(sha512Service.Verify(PlainPassword, sha256Hash));
+        }
+
+        #endregion Verify
+
         #region CreateRandom
 
         [TestMethod]

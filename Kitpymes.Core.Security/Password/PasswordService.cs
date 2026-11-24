@@ -271,8 +271,13 @@ public class PasswordService(PasswordSettings settings)
 
     private bool VerifyPassword(string? hashedPassword, string? plainPassword)
     {
-        var plain = plainPassword.ToThrowIfNullOrEmpty();
-        var hash = hashedPassword.ToThrowIfNullOrEmpty();
+        if (plainPassword.ToIsNullOrEmpty() || hashedPassword.ToIsNullOrEmpty())
+        {
+            return false;
+        }
+
+        var plain = plainPassword;
+        var hash = hashedPassword;
 
         byte[] decodedHashedPassword;
 
@@ -296,12 +301,17 @@ public class PasswordService(PasswordSettings settings)
         {
             var shaUInt = ReadNetworkByteOrder(decodedHashedPassword, 1);
 
+            // Un código de algoritmo desconocido es un hash mal formado.
+            if (shaUInt > 2)
+            {
+                return false;
+            }
+
             var verifyPrf = shaUInt switch
             {
                 0 => KeyDerivationPrf.HMACSHA1,
                 1 => KeyDerivationPrf.HMACSHA256,
-                2 => KeyDerivationPrf.HMACSHA512,
-                _ => KeyDerivationPrf.HMACSHA256,
+                _ => KeyDerivationPrf.HMACSHA512,
             };
 
             if (verifyPrf != settings.KeyDerivationAlgorithm!.Value.ToEnum<KeyDerivationPrf>())
@@ -313,8 +323,7 @@ public class PasswordService(PasswordSettings settings)
             {
                 0 => HashAlgorithmName.SHA1,
                 1 => HashAlgorithmName.SHA256,
-                2 => HashAlgorithmName.SHA512,
-                _ => HashAlgorithmName.SHA256,
+                _ => HashAlgorithmName.SHA512,
             };
 
             if (verifyAlgorithmName != settings.AlgorithmName.ToHashAlgorithmName(HashAlgorithmName.SHA256))
