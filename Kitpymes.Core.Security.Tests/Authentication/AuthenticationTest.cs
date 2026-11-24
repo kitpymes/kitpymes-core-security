@@ -630,6 +630,8 @@ namespace Kitypmes.Core.Security.Tests
             Assert.AreEqual(2, signOuts.Count);
             Assert.AreNotEqual("/beto", signOuts[contextAna]?.RedirectUri);
             Assert.AreNotEqual("/ana", signOuts[contextBeto]?.RedirectUri);
+            Assert.IsNull(signOuts[contextAna]);
+            Assert.IsNull(signOuts[contextBeto]);
         }
 
         [TestMethod]
@@ -654,6 +656,21 @@ namespace Kitypmes.Core.Security.Tests
 
             requestAuthentication.Verify(x => x.SignInAsync(httpContext, CookieAuthenticationDefaults.AuthenticationScheme, It.IsAny<ClaimsPrincipal>(), It.IsAny<AuthenticationProperties>()), Times.Once);
             requestAuthentication.Verify(x => x.SignOutAsync(httpContext, CookieAuthenticationDefaults.AuthenticationScheme, It.IsAny<AuthenticationProperties>()), Times.Once);
+            registeredAuthentication.VerifyNoOtherCalls();
+        }
+
+        [TestMethod]
+        public async Task CookiesService_RequestWithoutAuthenticationService_Throws()
+        {
+            // Con contenedor de petición y sin IAuthenticationService no se usa en silencio el del registro.
+            var httpContext = new DefaultHttpContext { RequestServices = new ServiceCollection().BuildServiceProvider() };
+            var accessor = new Mock<IHttpContextAccessor>();
+            accessor.SetupGet(x => x.HttpContext).Returns(httpContext);
+            var registeredAuthentication = new Mock<IAuthenticationService>();
+
+            var service = new CookiesService(new CookiesSettings(), registeredAuthentication.Object, accessor.Object);
+
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => service.SignInAsync(new[] { new Claim(ClaimTypes.Name, "ana") }));
             registeredAuthentication.VerifyNoOtherCalls();
         }
 

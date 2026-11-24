@@ -80,7 +80,10 @@ public class CookiesService : ICookiesService
             null).ConfigureAwait(false);
     }
 
-    // IAuthenticationService es scoped: el de la petición, y el del registro sólo si la petición no tiene contenedor.
+    // IAuthenticationService es scoped: el de la petición, y el del registro sólo si la petición no tiene contenedor
+    // (fuera del pipeline de ASP.NET Core). Si lo tiene y le falta el servicio, lanza: es una mala configuración.
     private IAuthenticationService GetAuthenticationService(HttpContext httpContext)
-        => httpContext.RequestServices?.GetService<IAuthenticationService>() ?? AuthenticationService;
+        => httpContext.RequestServices is null
+            ? AuthenticationService
+            : httpContext.RequestServices.GetRequiredService<IAuthenticationService>();
 }
