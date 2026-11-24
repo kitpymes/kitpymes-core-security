@@ -1,3 +1,12 @@
+# v.2.5.2
+Parche de seguridad: la autenticación por JWT aceptaba tokens que todavía no eran válidos. Sin cambios en la API pública.
+Corrección de un fallo de seguridad: la configuración de JwtBearer ponía un LifetimeValidator propio que sólo comprobaba que la fecha de caducidad (exp) fuera futura y sustituía a la validación de IdentityModel. Por eso:
+- Se aceptaba un token con nbf (no válido antes de) en el futuro. Ahora se rechaza.
+- WithValidateLifetime(false) (ValidateLifetime = false) no tenía efecto: un token caducado se rechazaba igual. Ahora no se comprueban las fechas, como dice el ajuste.
+- Con RequireExpirationTime = false, un token sin exp se rechazaba igual. Ahora se acepta, como dice el ajuste. Con el valor por defecto (true), se sigue rechazando.
+Ahora valida las fechas IdentityModel, con ClockSkew = 0 como antes: un token caducado o todavía no válido se rechaza al segundo.
+- El paquete se compara al empaquetar con la API pública de la 2.5.1 (validación de paquete).
+
 # v.2.5.1
 Parche de seguridad: CookiesService compartía datos entre peticiones de usuarios distintos. Sin cambios en la API pública.
 Corrección de un fallo de seguridad: CookiesService se registra como singleton y guardaba en una propiedad las AuthenticationProperties del último SignInAsync, de cualquier petición. El SignOutAsync de otra petición, de otro usuario, cerraba la sesión con esas propiedades (por ejemplo, su RedirectUri), y con varias peticiones a la vez el resultado dependía del orden. Ahora no guarda nada: SignOutAsync cierra la sesión sin propiedades (null).
