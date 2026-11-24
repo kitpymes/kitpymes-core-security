@@ -35,7 +35,7 @@ using Microsoft.IdentityModel.Tokens;
 public static class JsonWebTokenServiceCollectionExtensions
 {
     // Clave de HttpContext.Items donde OnAuthenticationFailed deja el error del token para OnChallenge.
-    private static readonly object AuthenticationFailedDetailsKey = new();
+    private static readonly object AuthenticationFailedDetailsKey = new object();
 
     /// <summary>
     /// Obtiene el servicio de autenticación por token.
