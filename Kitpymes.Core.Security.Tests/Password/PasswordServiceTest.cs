@@ -913,6 +913,86 @@ namespace Kitypmes.Core.Security.Tests
             }
         }
 
+        private static PasswordService CreateDisabledService()
+        {
+            Action<PasswordOptions> options = x => x.WithEnabled(false);
+
+            return new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+        }
+
+        [TestMethod]
+        public void CreateRandom_Passing_DisabledService_Throws()
+        {
+            var exception = Assert.ThrowsExactly<global::Kitpymes.Core.Shared.Util.SharedException>(() => CreateDisabledService().CreateRandom());
+
+            StringAssert.Contains(exception.Message, "PasswordSettings is not enabled.");
+        }
+
+        [TestMethod]
+        public void Create_Passing_DisabledService_Throws()
+        {
+            var exception = Assert.ThrowsExactly<global::Kitpymes.Core.Shared.Util.SharedException>(() => CreateDisabledService().Create(PlainPassword));
+
+            StringAssert.Contains(exception.Message, "PasswordSettings is not enabled.");
+        }
+
+        [TestMethod]
+        [DataRow(null)]
+        [DataRow("")]
+        public void Validate_Passing_NullOrEmpty_Returns_RequiredValue(string? plainPassword)
+        {
+            var errors = CreateDefaultService().Validate(plainPassword);
+
+            Assert.IsTrue(errors.Contains(PasswordErrorResult.RequiredValue));
+        }
+
+        [TestMethod]
+        [DataRow(30)]
+        [DataRow(60)]
+        [DataRow(100)]
+        public void CreateRandom_WithRequiredUniqueChars_Returns_NullOrValidPassword(int requiredMinLength)
+        {
+            // CreateRandom nunca devuelve una contraseña que no cumpla la política: si no llega, devuelve null.
+            // Con 60 y 100 no hay bastantes caracteres distintos (se usan todos los disponibles).
+            Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredUniqueChars().WithRequiredMinLength(requiredMinLength);
+            var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            for (var i = 0; i < 20; i++)
+            {
+                var plainPassword = service.CreateRandom();
+
+                Assert.IsTrue(plainPassword is null || service.Validate(plainPassword).Count == 0, plainPassword);
+            }
+        }
+
+        [TestMethod]
+        public void CreateRandom_WithRequiredUniqueChars_Returns_RandomFill()
+        {
+            // El relleno sin repetidos se elige al azar: sin barajar saldría siempre el mismo.
+            Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredUniqueChars().WithRequiredMinLength(20);
+            var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            var fills = Enumerable.Range(0, 10)
+                .Select(_ => service.CreateRandom())
+                .Select(x => x!.Substring(1))
+                .Distinct()
+                .Count();
+
+            Assert.IsTrue(fills > 1);
+        }
+
+        [TestMethod]
+        public void Create_Writes_HeaderInNetworkByteOrder()
+        {
+            // Cabecera en big-endian: algoritmo, iteraciones y longitud de la sal, con valores que usan los cuatro bytes.
+            var decoded = CreateDecodedHash(CreateService(2, 0x020304, 32));
+
+            Assert.AreEqual(0xC0, decoded[0]);
+            CollectionAssert.AreEqual(new byte[] { 0, 0, 0, 2 }, decoded.Skip(1).Take(4).ToArray());
+            CollectionAssert.AreEqual(new byte[] { 0, 0x02, 0x03, 0x04 }, decoded.Skip(5).Take(4).ToArray());
+            CollectionAssert.AreEqual(new byte[] { 0, 0, 0, 32 }, decoded.Skip(9).Take(4).ToArray());
+        }
+
         #endregion CreateRandom
     }
 }

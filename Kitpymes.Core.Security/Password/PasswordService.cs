@@ -8,6 +8,7 @@
 namespace Kitpymes.Core.Security.Password;
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -212,20 +213,10 @@ public class PasswordService(PasswordSettings settings)
     #region Private
 
     private static uint ReadNetworkByteOrder(byte[] buffer, int offset)
-    {
-        return (uint)buffer[offset + 0] << 24
-            | (uint)buffer[offset + 1] << 16
-            | (uint)buffer[offset + 2] << 8
-            | buffer[offset + 3];
-    }
+        => BinaryPrimitives.ReadUInt32BigEndian(buffer.AsSpan(offset, 4));
 
     private static void WriteNetworkByteOrder(byte[] buffer, int offset, uint value)
-    {
-        buffer[offset + 0] = (byte)(value >> 24);
-        buffer[offset + 1] = (byte)(value >> 16);
-        buffer[offset + 2] = (byte)(value >> 8);
-        buffer[offset + 3] = (byte)(value >> 0);
-    }
+        => BinaryPrimitives.WriteUInt32BigEndian(buffer.AsSpan(offset, 4), value);
 
     /// <summary>
     /// Elige al azar, sin repetir, caracteres de <paramref name="chars"/> que no estén en <paramref name="used"/>.
