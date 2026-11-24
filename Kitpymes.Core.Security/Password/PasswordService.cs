@@ -54,6 +54,14 @@ public class PasswordService(PasswordSettings settings)
     /// </summary>
     private const int MinHeaderByteLength = 13;
 
+    private const string Digits = "0123456789";
+
+    private const string EspecialChars = "@#%&*?¿_-+=";
+
+    private const string Lowercase = "abcdefghijklmnopqrstuvwxyz";
+
+    private const string Uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
     private PasswordSettings PasswordSettings { get; set; } = settings;
 
     /// <inheritdoc/>
@@ -61,59 +69,55 @@ public class PasswordService(PasswordSettings settings)
     {
         Shared.Util.Verify.ToThrowIf($"{nameof(PasswordSettings)} is not enabled.", () => PasswordSettings.Enabled == false);
 
-        var passwordBuilder = new StringBuilder();
+        var chars = new List<char>();
 
         if (PasswordSettings.RequireDigit == true)
         {
-            var digit = "0123456789".ToRandom(1);
-
-            passwordBuilder.Append(digit);
+            chars.Add(ToRandomChar(Digits));
         }
 
         if (PasswordSettings.RequireEspecialChars == true)
         {
-            var especialChars = "@#%&*?¿_-+=".ToRandom(1);
-
-            passwordBuilder.Append(especialChars);
+            chars.Add(ToRandomChar(EspecialChars));
         }
 
         if (PasswordSettings.RequireLowercase == true)
         {
-            var lowercase = "abcdefghijklmnopqrstuvw".ToRandom(1);
-
-            passwordBuilder.Append(lowercase);
+            chars.Add(ToRandomChar(Lowercase));
         }
 
         if (PasswordSettings.RequireUppercase == true)
         {
-            var uppercase = "ABCDEFGHJKLMNOPQRSTUVW".ToRandom(1);
-
-            passwordBuilder.Append(uppercase);
+            chars.Add(ToRandomChar(Uppercase));
         }
+
+        // El relleno sale de todos los caracteres permitidos, y de los especiales sólo si se piden.
+        var fillChars = Digits + Lowercase + Uppercase + (PasswordSettings.RequireEspecialChars == true ? EspecialChars : string.Empty);
+
+        var missing = PasswordSettings.RequiredMinLength!.Value - chars.Count;
 
         if (PasswordSettings.RequiredUniqueChars == true)
         {
-            var uniqueChars = "xyzXYZ".ToRandom(1);
-
-            passwordBuilder.Append(uniqueChars);
+            // Sin repetir: si no hay bastantes caracteres distintos, la contraseña queda corta y Validate la rechaza.
+            chars.AddRange(ToRandomUnique(fillChars, missing, chars));
         }
-
-        // Sólo se rellena si los caracteres obligatorios no llegan a la longitud mínima.
-        if (PasswordSettings.RequiredMinLength.HasValue && PasswordSettings.RequiredMinLength.Value > passwordBuilder.Length)
+        else
         {
-            var length = PasswordSettings.RequiredMinLength.Value - passwordBuilder.Length;
-
-            const string chars = "0123456789ABCDEFGHJKLMNOPQRSTUVWabcdefghijklmnopqrstuvw";
-
-            // Con caracteres únicos, el relleno al azar podía repetir uno ya usado y CreateRandom devolvía null.
-            var fill = PasswordSettings.RequiredUniqueChars == true
-                ? ToRandomUnique(chars, length, passwordBuilder.ToString())
-                : chars.ToRandom(length);
-
-            passwordBuilder.Append(fill);
+            for (var i = 0; i < missing; i++)
+            {
+                chars.Add(ToRandomChar(fillChars));
+            }
         }
 
-        var plainPassword = passwordBuilder.ToString();
+        // Los obligatorios van al principio: se barajan para que su posición no se pueda adivinar.
+        for (var i = chars.Count - 1; i > 0; i--)
+        {
+            var j = RandomNumberGenerator.GetInt32(i + 1);
+
+            (chars[i], chars[j]) = (chars[j], chars[i]);
+        }
+
+        var plainPassword = new string(chars.ToArray());
 
         var errors = Validate(plainPassword);
 
@@ -218,6 +222,8 @@ public class PasswordService(PasswordSettings settings)
     private static void WriteNetworkByteOrder(byte[] buffer, int offset, uint value)
         => BinaryPrimitives.WriteUInt32BigEndian(buffer.AsSpan(offset, 4), value);
 
+    private static char ToRandomChar(string chars) => chars[RandomNumberGenerator.GetInt32(chars.Length)];
+
     /// <summary>
     /// Elige al azar, sin repetir, caracteres de <paramref name="chars"/> que no estén en <paramref name="used"/>.
     /// Si no hay bastantes, devuelve todos los disponibles.
@@ -226,11 +232,11 @@ public class PasswordService(PasswordSettings settings)
     /// <param name="length">Cantidad de caracteres que se quieren.</param>
     /// <param name="used">Caracteres que ya tiene la contraseña.</param>
     /// <returns>Los caracteres elegidos.</returns>
-    private static string ToRandomUnique(string chars, int length, string used)
+    private static char[] ToRandomUnique(string chars, int length, List<char> used)
     {
-        var available = chars.Distinct().Where(x => !used.Contains(x, StringComparison.Ordinal)).ToArray();
+        var available = chars.Distinct().Where(x => !used.Contains(x)).ToArray();
 
-        var count = Math.Min(length, available.Length);
+        var count = Math.Clamp(length, 0, available.Length);
 
         for (var i = 0; i < count; i++)
         {
@@ -239,7 +245,7 @@ public class PasswordService(PasswordSettings settings)
             (available[i], available[j]) = (available[j], available[i]);
         }
 
-        return new string(available, 0, count);
+        return available.Take(count).ToArray();
     }
 
     private static byte[] CreateSalt(int saltLength)

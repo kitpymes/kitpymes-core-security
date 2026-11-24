@@ -166,14 +166,15 @@ namespace Kitpymes.Core.Security.Password.Settings
 
         /// <summary>
         /// Obtiene o establece un valor que indica si requiere una longitud mínima.
-        /// <para><strong>Default:</strong> <see cref="DefaultRequiredMinLength"/> = 3.</para>
+        /// <para><strong>Default:</strong> <see cref="DefaultRequiredMinLength"/> = 6. Un valor menor que 1 se ignora.</para>
         /// </summary>
         public int? RequiredMinLength
         {
             get => _requiredMinLength;
             set
             {
-                if (value.HasValue)
+                // Como WithRequiredMinLength, que no admite menos de 1: un 0 o un negativo (desde appsettings) se ignora.
+                if (value.HasValue && value.Value >= 1)
                 {
                     _requiredMinLength = value.Value;
                 }

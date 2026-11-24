@@ -907,8 +907,10 @@ namespace Kitypmes.Core.Security.Tests
             {
                 var plainPassword = passwordService.CreateRandom();
 
+                // Desde la 2.5.0, RequiredUniqueChars no añade un carácter propio: la contraseña mide lo que piden
+                // los cuatro obligatorios o la longitud mínima, lo que sea mayor.
                 Assert.IsNotNull(plainPassword);
-                Assert.AreEqual(5, plainPassword.Length);
+                Assert.AreEqual(Math.Max(requiredMinLength, 4), plainPassword.Length);
                 Assert.AreEqual(plainPassword.Length, plainPassword.Distinct().Count());
             }
         }
@@ -948,13 +950,14 @@ namespace Kitypmes.Core.Security.Tests
 
         [TestMethod]
         [DataRow(30, true)]
-        [DataRow(60, false)]
+        [DataRow(62, true)]
+        [DataRow(63, false)]
         [DataRow(100, false)]
         public void CreateRandom_WithRequiredUniqueChars_Returns_NullOrValidPassword(int requiredMinLength, bool mustCreate)
         {
             // CreateRandom nunca devuelve una contraseña que no cumpla la política: si no llega, devuelve null.
-            // Con 30 tiene que crearla. Con 60 y 100 no hay bastantes caracteres distintos (se usan todos los
-            // disponibles); que hoy devuelva null es un límite pendiente de CreateRandom, no lo que se quiere.
+            // Sin especiales hay 62 caracteres distintos (dígitos y letras): hasta 62 tiene que crearla; con más,
+            // no se puede sin repetir y devuelve null.
             Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredUniqueChars().WithRequiredMinLength(requiredMinLength);
             var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
 
@@ -965,9 +968,12 @@ namespace Kitypmes.Core.Security.Tests
                 if (mustCreate)
                 {
                     Assert.IsNotNull(plainPassword);
+                    Assert.AreEqual(0, service.Validate(plainPassword).Count, plainPassword);
                 }
-
-                Assert.IsTrue(plainPassword is null || service.Validate(plainPassword).Count == 0, plainPassword);
+                else
+                {
+                    Assert.IsNull(plainPassword);
+                }
             }
         }
 
@@ -980,11 +986,93 @@ namespace Kitypmes.Core.Security.Tests
 
             var fills = Enumerable.Range(0, 10)
                 .Select(_ => service.CreateRandom())
-                .Select(x => x!.Substring(1))
                 .Distinct()
                 .Count();
 
             Assert.IsTrue(fills > 1);
+        }
+
+        [TestMethod]
+        public void CreateRandom_Shuffles_RequiredChars()
+        {
+            // Hasta la 2.4.1 los obligatorios salían siempre en el mismo orden: dígito, especial, minúscula, mayúscula.
+            Action<PasswordOptions> options = x => x.WithEnabled()
+                .WithRequireDigit()
+                .WithRequireEspecialCharacters()
+                .WithRequireLowercase()
+                .WithRequireUppercase()
+                .WithRequiredMinLength(4);
+            var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            var passwords = Enumerable.Range(0, 200).Select(_ => service.CreateRandom()!).ToList();
+
+            Assert.IsTrue(passwords.Select(x => char.IsDigit(x[0])).Distinct().Count() > 1);
+            Assert.IsTrue(passwords.Select(x => char.IsUpper(x[3])).Distinct().Count() > 1);
+        }
+
+        [TestMethod]
+        public void CreateRandom_WithRequiredUniqueChars_Uses_Every_Letter_And_Digit()
+        {
+            // Con 62 caracteres únicos y sin especiales, la contraseña usa todos los dígitos y todas las letras.
+            // Hasta la 2.4.1 se dejaban fuera la I, la x, la y y la z (y sus mayúsculas) y no se podía.
+            Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredUniqueChars().WithRequiredMinLength(62);
+            var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            var plainPassword = service.CreateRandom();
+
+            Assert.IsNotNull(plainPassword);
+            CollectionAssert.AreEquivalent(
+                "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray(),
+                plainPassword.ToCharArray());
+        }
+
+        [TestMethod]
+        public void CreateRandom_WithoutEspecialChars_Uses_Only_LettersAndDigits()
+        {
+            Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredMinLength(200);
+            var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            var plainPassword = service.CreateRandom();
+
+            Assert.IsNotNull(plainPassword);
+            Assert.AreEqual(200, plainPassword.Length);
+            Assert.IsTrue(plainPassword.All(char.IsLetterOrDigit));
+        }
+
+        [TestMethod]
+        public void CreateRandom_WithEspecialChars_Fills_With_Them_Too()
+        {
+            Action<PasswordOptions> options = x => x.WithEnabled().WithRequireEspecialCharacters().WithRequiredMinLength(200);
+            var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            var plainPassword = service.CreateRandom();
+
+            Assert.IsNotNull(plainPassword);
+            Assert.IsTrue(plainPassword.Count(x => !char.IsLetterOrDigit(x)) > 1);
+        }
+
+        [TestMethod]
+        public void CreateRandom_WithMinLengthOne_Returns_OneChar()
+        {
+            Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredMinLength(1);
+            var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            Assert.AreEqual(1, service.CreateRandom()!.Length);
+        }
+
+        [TestMethod]
+        [DataRow(0)]
+        [DataRow(-5)]
+        public void PasswordSettings_RequiredMinLength_Ignores_LessThanOne(int requiredMinLength)
+        {
+            // Desde appsettings llegaba sin comprobar; WithRequiredMinLength ya lanzaba con menos de 1.
+            var settings = new PasswordSettings { RequiredMinLength = requiredMinLength };
+
+            Assert.AreEqual(PasswordSettings.DefaultRequiredMinLength, settings.RequiredMinLength);
+
+            settings.RequiredMinLength = 1;
+
+            Assert.AreEqual(1, settings.RequiredMinLength);
         }
 
         [TestMethod]
