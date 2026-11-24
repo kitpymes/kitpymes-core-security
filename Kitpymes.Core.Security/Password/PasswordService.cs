@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
 using Kitpymes.Core.Security.Password.Settings;
 using Kitpymes.Core.Shared.Extensions;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;

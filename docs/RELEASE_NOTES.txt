@@ -5,7 +5,8 @@ CAMBIO DE COMPORTAMIENTO: CreateRandom.
 - El relleno usa todos los dígitos y todas las letras, mayúsculas y minúsculas, y los caracteres especiales sólo si RequireEspecialChars está activo. Hasta la 2.4.1 se dejaban fuera la I, la x, la y y la z (y la X, la Y y la Z), y no se rellenaba con especiales.
 - RequiredUniqueChars ya no añade un carácter propio (uno de xyzXYZ): sólo exige que no se repita ninguno. La contraseña mide lo que piden los obligatorios o RequiredMinLength, lo que sea mayor.
 - Con RequiredUniqueChars caben hasta 62 caracteres sin especiales y 73 con ellos (antes, unos 56). Si RequiredMinLength es mayor, no se puede crear y CreateRandom devuelve null, como dice su documentación.
-CAMBIO DE COMPORTAMIENTO: PasswordSettings.RequiredMinLength ignora un valor menor que 1 (se queda el anterior, por defecto 6), como ya hacía WithRequiredMinLength, que lanza. Hasta la 2.4.1, un 0 o un negativo desde appsettings se aceptaba sin comprobar.
+CAMBIO DE COMPORTAMIENTO: PasswordSettings.RequiredMinLength ignora un valor menor que 1 y se queda el anterior (por defecto 6). WithRequiredMinLength ya no admitía menos de 1 (lanza); desde appsettings, en cambio, un 0 o un negativo se aceptaba sin comprobar.
+- A quien tenga "RequiredMinLength": 0 (o negativo) en appsettings: hasta la 2.4.1 no había longitud mínima; ahora es 6, así que Create rechaza contraseñas de 1 a 5 caracteres y CreateRandom las genera de 6. Para no exigir longitud, poner 1.
 - La documentación de RequiredMinLength decía que el valor por defecto era 3; es 6.
 - README: sección Password al día (NeedsRehash, Verify y los valores por defecto).
 - El paquete se compara al empaquetar con la API pública de la 2.4.1 (validación de paquete).

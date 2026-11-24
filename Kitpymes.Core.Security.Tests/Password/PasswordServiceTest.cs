@@ -843,7 +843,7 @@ namespace Kitypmes.Core.Security.Tests
         public void CreateRandom_WithLongMinLength_Returns_RequiredMinLength()
         {
             // Sin caracteres únicos, el relleno puede repetir caracteres: una longitud mayor que los caracteres disponibles
-            // (55) tiene que salir entera.
+            // (62) tiene que salir entera.
             Action<PasswordOptions> options = x => x.WithEnabled()
                 .WithRequireDigit()
                 .WithRequiredMinLength(100)
@@ -1015,7 +1015,7 @@ namespace Kitypmes.Core.Security.Tests
         public void CreateRandom_WithRequiredUniqueChars_Uses_Every_Letter_And_Digit()
         {
             // Con 62 caracteres únicos y sin especiales, la contraseña usa todos los dígitos y todas las letras.
-            // Hasta la 2.4.1 se dejaban fuera la I, la x, la y y la z (y sus mayúsculas) y no se podía.
+            // Hasta la 2.4.1 se dejaban fuera la I, la x, la y, la z, la X, la Y y la Z, y no se podía.
             Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredUniqueChars().WithRequiredMinLength(62);
             var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
 
@@ -1025,6 +1025,28 @@ namespace Kitypmes.Core.Security.Tests
             CollectionAssert.AreEquivalent(
                 "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray(),
                 plainPassword.ToCharArray());
+        }
+
+        [TestMethod]
+        [DataRow(73, true)]
+        [DataRow(74, false)]
+        public void CreateRandom_WithRequiredUniqueCharsAndEspecialChars_Fits_73(int requiredMinLength, bool mustCreate)
+        {
+            // Con especiales hay 73 caracteres distintos: 10 dígitos, 26 minúsculas, 26 mayúsculas y 11 especiales.
+            Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredUniqueChars().WithRequireEspecialCharacters().WithRequiredMinLength(requiredMinLength);
+            var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+
+            var plainPassword = service.CreateRandom();
+
+            if (mustCreate)
+            {
+                Assert.IsNotNull(plainPassword);
+                Assert.AreEqual(73, plainPassword.Distinct().Count());
+            }
+            else
+            {
+                Assert.IsNull(plainPassword);
+            }
         }
 
         [TestMethod]
