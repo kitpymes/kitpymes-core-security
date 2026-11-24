@@ -925,7 +925,7 @@ namespace Kitypmes.Core.Security.Tests
         [TestMethod]
         public async Task RedirectToAccessDenied_WithUser_Throws_WithUsername()
         {
-            // Un nombre con comillas sale tal cual en el mensaje; el de texto plano lo prueba WithPlainTextNameClaim.
+            // Las comillas del valor salen escapadas (\u0022) en el JSON; el nombre en texto plano lo prueba WithPlainTextNameClaim.
             var httpContext = new DefaultHttpContext
             {
                 User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "\"ana-test\"") }, "Test")),
@@ -982,6 +982,45 @@ namespace Kitypmes.Core.Security.Tests
             var exception = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => events.RedirectToAccessDenied(CreateRedirectContext(httpContext)));
 
             Assert.IsFalse(exception.Message.Contains($"\"{Environment.UserName}\"", StringComparison.Ordinal), exception.Message);
+            StringAssert.Contains(exception.Message, "\"Anonymous\"");
+        }
+
+        [TestMethod]
+        public async Task RedirectToAccessDenied_Keeps_Details_Shape()
+        {
+            var httpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "josé") }, "Test")),
+            };
+            httpContext.Request.Scheme = "https";
+            httpContext.Request.Host = new HostString("app.test");
+            httpContext.Request.Path = "/privado";
+            httpContext.Request.Headers.UserAgent = "agente-test";
+
+            var events = new CustomCookieAuthenticationEvents(new HttpContextAccessor { HttpContext = httpContext });
+
+            var exception = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => events.RedirectToAccessDenied(CreateRedirectContext(httpContext)));
+
+            using var json = System.Text.Json.JsonDocument.Parse(exception.Message);
+            var root = json.RootElement;
+            Assert.AreEqual("josé", root.GetProperty("User").GetString());
+            Assert.AreEqual("agente-test", root.GetProperty("UserAgent")[0].GetString());
+            Assert.AreEqual("https://app.test/privado", root.GetProperty("Request").GetString());
+            Assert.AreEqual("josé", root.GetProperty("OptionalData").GetProperty("Username")[0].GetString());
+            Assert.AreEqual(1, root.GetProperty("OptionalData").GetProperty("AccessDeniedDateTime").GetArrayLength());
+        }
+
+        [TestMethod]
+        public async Task RedirectToAccessDenied_WithoutHttpContext_Throws_Unauthorized()
+        {
+            // Hasta la 2.6.1, sin HttpContext lanzaba SharedException al serializar un nulo.
+            var events = new CustomCookieAuthenticationEvents(new HttpContextAccessor());
+
+            var exception = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => events.RedirectToAccessDenied(CreateRedirectContext(new DefaultHttpContext())));
+
+            using var json = System.Text.Json.JsonDocument.Parse(exception.Message);
+            Assert.AreEqual("Anonymous", json.RootElement.GetProperty("User").GetString());
+            Assert.IsFalse(json.RootElement.TryGetProperty("Request", out _));
         }
 
         #endregion CustomCookieAuthenticationEvents

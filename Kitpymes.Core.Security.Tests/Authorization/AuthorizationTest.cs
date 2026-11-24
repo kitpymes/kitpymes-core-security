@@ -141,6 +141,7 @@ namespace Kitypmes.Core.Security.Tests
             Assert.IsTrue(roleContext.HasFailed);
             Assert.IsTrue(permissionContext.HasFailed);
             StringAssert.Contains(roleContext.FailureReasons.Single().Message, "Necesita ingresar al sistema");
+            StringAssert.Contains(permissionContext.FailureReasons.Single().Message, "Necesita ingresar al sistema");
         }
 
         #endregion PermissionRequirement

@@ -1,8 +1,12 @@
 # v.2.6.2
-Parche: las claims con un valor que no es JSON ya no lanzan JsonException. Sin cambios en la API pública.
-Corrección de un fallo: RoleRequirementHandler y PermissionRequirementHandler leían la sesión de la claim ApiSession.UserClaimType como JSON y, si el valor no lo era, lanzaban JsonException: la petición terminaba en un error 500 en vez de denegarse. Ahora una claim mal formada cuenta como usuario sin sesión y la autorización falla con "Necesita ingresar al sistema...".
-Corrección de un fallo: CustomCookieAuthenticationEvents.RedirectToAccessDenied lanzaba JsonException con el nombre de usuario en texto plano, que es como lo pone ASP.NET Core, en vez de UnauthorizedAccessException. Además, sin usuario, ponía en el mensaje el nombre del usuario del sistema operativo del servidor. Ahora el mensaje es un JSON propio con Request (método y ruta), AccessDeniedDateTime y Username (sólo si hay usuario), y ya no usa HttpContext.ToDetails de Shared.
-- Quien leyera otros campos de ese mensaje: ya no están.
+Parche: la sesión y el nombre de usuario en texto plano ya no lanzan JsonException al autorizar ni al denegar el acceso. Sin cambios en la API pública.
+Corrección de un fallo: RoleRequirementHandler y PermissionRequirementHandler leían como JSON la claim ApiSession.UserClaimType y, si su valor no lo era, lanzaban JsonException: la petición acababa en un 500 en vez de denegarse. Ahora una claim mal formada cuenta como usuario sin sesión y la autorización falla con "Necesita ingresar al sistema...".
+Corrección de un fallo de seguridad en CustomCookieAuthenticationEvents.RedirectToAccessDenied (la librería no lo registra; sólo afecta a quien lo use por su cuenta):
+- Con el nombre de usuario en texto plano (ClaimTypes.Name, como lo pone ASP.NET Core) lanzaba JsonException. Ahora lanza UnauthorizedAccessException, como con el nombre en JSON.
+- Sin usuario, el campo User del mensaje llevaba el nombre del usuario del sistema operativo del servidor. Ahora lleva "Anonymous".
+- Sin HttpContext lanzaba SharedException. Ahora lanza UnauthorizedAccessException con User y OptionalData.
+CAMBIO DE COMPORTAMIENTO: cambia el tipo de excepción en esos casos. Quien capturara JsonException (en los manejadores o en RedirectToAccessDenied) o SharedException (en RedirectToAccessDenied sin HttpContext): ahora no salta; capturar UnauthorizedAccessException en RedirectToAccessDenied. Los manejadores ya no lanzan: deniegan.
+- El mensaje mantiene sus campos (User, IP, UserAgent, ContentType, Request, OptionalData con AccessDeniedDateTime y Username). Único cambio: User es el nombre tal cual (Identity.Name); antes se deserializaba como JSON, así que un nombre guardado entre comillas salía sin ellas y ahora sale con ellas.
 - El paquete se compara al empaquetar con la API pública de la 2.6.1 (validación de paquete).
 
 # v.2.6.1
