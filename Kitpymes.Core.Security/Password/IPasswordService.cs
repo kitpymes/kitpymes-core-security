@@ -42,7 +42,7 @@ public interface IPasswordService
     /// </summary>
     /// <param name="plainPassword">Contraseña de cadena.</param>
     /// <param name="hashPassword">Contraseña cifrada.</param>
-    /// <returns>bool | ArgumentException: si plainPassword o hashPassword es nulo o vacio.</returns>
+    /// <returns>true si la contraseña corresponde al hash; false si no corresponde, si alguno de los dos es nulo o vacío, o si el hash está mal formado o es de otro algoritmo. No lanza excepciones por el contenido de los argumentos.</returns>
     bool Verify(string? plainPassword, string? hashPassword);
 
     /// <summary>
