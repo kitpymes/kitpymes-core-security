@@ -237,8 +237,9 @@ namespace Kitypmes.Core.Security.Tests
         }
 
         [TestMethod]
-        public async Task LoadJsonWebToken_Challenge_And_AuthenticationFailed_Throw_Unauthorized()
+        public async Task LoadJsonWebToken_Challenge_Throws_Unauthorized_WithAuthenticationFailedDetails()
         {
+            // Desde la 2.6.3 OnAuthenticationFailed no lanza (tumbaba las rutas públicas): guarda el error y lo lanza el desafío.
             var provider = LoadJsonWebToken();
 
             var events = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>().Get(JwtBearerDefaults.AuthenticationScheme).Events;
@@ -246,8 +247,16 @@ namespace Kitypmes.Core.Security.Tests
             var challenge = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => events.OnChallenge(CreateChallengeContext()));
             Assert.AreEqual(DefaultTokenError, challenge.Message);
 
-            var failed = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => events.OnAuthenticationFailed(CreateFailedContext(new InvalidOperationException("otro"))));
-            Assert.AreEqual("otro", failed.Message);
+            var httpContext = new DefaultHttpContext();
+            var failedContext = new AuthenticationFailedContext(httpContext, new AuthenticationScheme("Bearer", null, typeof(JwtBearerHandler)), new JwtBearerOptions()) { Exception = new InvalidOperationException("otro") };
+
+            var failed = events.OnAuthenticationFailed(failedContext);
+            Assert.IsTrue(failed.IsCompletedSuccessfully);
+            Assert.IsNull(failedContext.Result);
+
+            var challengeContext = new JwtBearerChallengeContext(httpContext, new AuthenticationScheme("Bearer", null, typeof(JwtBearerHandler)), new JwtBearerOptions(), new AuthenticationProperties());
+            var afterFailure = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => events.OnChallenge(challengeContext));
+            Assert.AreEqual("otro", afterFailure.Message);
         }
 
         [TestMethod]
