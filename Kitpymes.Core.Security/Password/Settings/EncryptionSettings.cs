@@ -81,7 +81,6 @@ public partial class EncryptionSettings
     /// </summary>
     public static readonly int DefaultSaltLength = SaltBytesLength.BITS128.ToValue();
 
-
     #endregion Default Values
 
     private byte _formatMarker = DefaultFormatMarker;
