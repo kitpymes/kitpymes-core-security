@@ -124,11 +124,15 @@ public class PasswordService(PasswordSettings settings)
     {
         Shared.Util.Verify.ToThrowIf($"{nameof(PasswordSettings)} is not enabled.", () => PasswordSettings.Enabled == false);
 
-        // Verify rechaza los hashes con más de MaxIterCount iteraciones: crearlos daría hashes que nunca verifican
-        // y un NeedsRehash que pide regenerar en cada inicio de sesión.
+        // Verify rechaza los hashes con más de MaxIterCount iteraciones o una sal de más de MaxSaltLength bytes:
+        // crearlos daría hashes que nunca verifican y un NeedsRehash que pide regenerar en cada inicio de sesión.
         Shared.Util.Verify.ToThrowIf(
-            $"{nameof(EncryptionSettings.IterCount)} ({PasswordSettings.EncryptionSettings.IterCount}) supera el máximo de {MaxIterCount} iteraciones: Verify rechazaría los hashes creados.",
+            $"{nameof(EncryptionSettings.IterCount)} supera el máximo de {MaxIterCount} iteraciones: Verify rechazaría los hashes creados.",
             () => PasswordSettings.EncryptionSettings.IterCount > MaxIterCount);
+
+        Shared.Util.Verify.ToThrowIf(
+            $"{nameof(EncryptionSettings.SaltLength)} supera el máximo de {MaxSaltLength} bytes: Verify rechazaría los hashes creados.",
+            () => PasswordSettings.EncryptionSettings.SaltLength > MaxSaltLength);
 
         var errors = Validate(plainPassword);
 
