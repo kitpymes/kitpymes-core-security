@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using Kitpymes.Core.Security.Password.Settings;
@@ -171,30 +170,6 @@ public class PasswordService(PasswordSettings settings)
     }
 
     #region Private
-
-    // Compares two byte arrays for equality. The method is specifically written so that the loop is not optimized.
-    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-    private static bool ByteArraysEqual(byte[] a, byte[] b)
-    {
-        if (a == null && b == null)
-        {
-            return true;
-        }
-
-        if (a == null || b == null || a.Length != b.Length)
-        {
-            return false;
-        }
-
-        var areSame = true;
-
-        for (var i = 0; i < a.Length; i++)
-        {
-            areSame &= a[i] == b[i];
-        }
-
-        return areSame;
-    }
 
     private static uint ReadNetworkByteOrder(byte[] buffer, int offset)
     {
@@ -364,7 +339,8 @@ public class PasswordService(PasswordSettings settings)
 
             actualSubkey = KeyDerivation.Pbkdf2(plain, salt, settings.KeyDerivationAlgorithm!.Value.ToEnum<KeyDerivationPrf>(), settings.IterCount!.Value, subkeyLength);
 
-            return ByteArraysEqual(actualSubkey, expectedSubkey);
+            // Comparación en tiempo constante, para no dar pistas por el tiempo de respuesta.
+            return CryptographicOperations.FixedTimeEquals(actualSubkey, expectedSubkey);
         }
         catch
         {
