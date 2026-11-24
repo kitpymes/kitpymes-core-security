@@ -10,6 +10,7 @@ namespace Kitpymes.Core.Security.Authentication.Cookies.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Kitpymes.Core.Security.Authentication.Cookies;
 using Kitpymes.Core.Shared.Extensions;
@@ -104,17 +105,19 @@ public class CustomCookieAuthenticationEvents(IHttpContextAccessor httpContextAc
             optionalData.ToAddOrUpdate("Username", username);
         }
 
-        return Task.FromException(new UnauthorizedAccessException(ToDetails(httpContext, username, optionalData).ToSerialize()));
+        return Task.FromException(new UnauthorizedAccessException(ToDetails(httpContext, optionalData).ToSerialize()));
     }
 
     // Los mismos campos que HttpContext.ToDetails de Shared 2.0.1, que no se usa: lee la claim del nombre como JSON
     // (lanza JsonException con el nombre en texto plano, que es como lo pone ASP.NET Core) y, sin usuario, pone en
     // User el del sistema operativo del servidor.
-    private static Dictionary<string, object> ToDetails(HttpContext? httpContext, string? username, object optionalData)
+    private static Dictionary<string, object> ToDetails(HttpContext? httpContext, object optionalData)
     {
+        var name = GetUserName(httpContext?.User);
+
         var details = new Dictionary<string, object>
         {
-            ["User"] = username.ToIsNullOrEmpty() ? "Anonymous" : username!,
+            ["User"] = name.ToIsNullOrEmpty() ? "Anonymous" : name!,
         };
 
         if (httpContext is not null)
@@ -140,5 +143,25 @@ public class CustomCookieAuthenticationEvents(IHttpContextAccessor httpContextAc
         details["OptionalData"] = optionalData;
 
         return details;
+    }
+
+    // Como Shared: la claim ClaimTypes.Name leída como JSON (así la guarda Shared al crear la identidad). Si no es
+    // JSON, su valor tal cual.
+    private static string? GetUserName(ClaimsPrincipal? user)
+    {
+        if (user is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return user.ToUserName();
+        }
+        catch (JsonException)
+        {
+            // Sin registro: el nombre en texto plano es una entrada esperada (ASP.NET Core lo pone así) y es dato personal.
+            return user.FindFirst(ClaimTypes.Name)?.Value;
+        }
     }
 }
