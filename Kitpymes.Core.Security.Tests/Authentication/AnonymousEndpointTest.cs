@@ -26,8 +26,10 @@ namespace Kitpymes.Core.Security.Tests.Authentication
             var builder = WebApplication.CreateBuilder();
             builder.WebHost.UseTestServer();
 
-            builder.Services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(options =>
-                options.WithEnabled().WithPrivateKey(privateKey).WithPublicKey(publicKey))));
+            builder.Services.LoadSecurity(sec => sec
+                .WithAuthentication(auth => auth.WithJsonWebToken(options =>
+                    options.WithEnabled().WithPrivateKey(privateKey).WithPublicKey(publicKey)))
+                .WithAuthorization(new global::Kitpymes.Core.Security.Authorization.Settings.AuthorizationSettings()));
 
             var app = builder.Build();
             app.UseRouting();
