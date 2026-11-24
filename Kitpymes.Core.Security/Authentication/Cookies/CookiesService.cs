@@ -15,6 +15,7 @@ using Kitpymes.Core.Security.Authentication.Cookies.Settings;
 using Kitpymes.Core.Shared.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 /*
     Clase para autenticarse por medio de cookies CookiesService
@@ -27,6 +28,8 @@ using Microsoft.AspNetCore.Http;
 /// </summary>
 /// <remarks>
 /// <para>En esta clase se pueden agregar toda la funcionalidad para autenticarse por medio de cookies.</para>
+/// <para>Se registra como singleton, así que no guarda nada de una petición: cada llamada usa el <see cref="HttpContext"/>
+/// y el <see cref="IAuthenticationService"/> de su petición.</para>
 /// </remarks>
 public class CookiesService : ICookiesService
 {
@@ -34,7 +37,7 @@ public class CookiesService : ICookiesService
     /// Inicializa una nueva instancia de la clase <see cref="CookiesService"/>.
     /// </summary>
     /// <param name="settings">Configuración de la autenticación.</param>
-    /// <param name="authenticationService">Servicio para autenticarse.</param>
+    /// <param name="authenticationService">Servicio para autenticarse; sólo se usa si la petición no tiene el suyo.</param>
     /// <param name="httpContextAccessor">Servicio para acceder al cotexto.</param>
     public CookiesService(CookiesSettings settings, IAuthenticationService authenticationService, IHttpContextAccessor httpContextAccessor)
     {
@@ -49,36 +52,35 @@ public class CookiesService : ICookiesService
 
     private IHttpContextAccessor HttpContextAccessor { get; }
 
-    private AuthenticationProperties? AuthenticationProperties { get; set; }
-
     /// <inheritdoc/>
     public async Task SignInAsync(IEnumerable<Claim> claims, Action<AuthenticationProperties>? options = null)
     {
-        HttpContextAccessor.HttpContext.ToThrowIfNullOrEmpty();
+        var httpContext = HttpContextAccessor.HttpContext.ToThrowIfNullOrEmpty();
 
         var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, CookiesSettings.AuthenticateScheme));
 
-        AuthenticationProperties = options.ToConfigureOrDefault();
+        var authenticationProperties = options.ToConfigureOrDefault();
 
-        await AuthenticationService.SignInAsync(
-            HttpContextAccessor.HttpContext,
+        await GetAuthenticationService(httpContext).SignInAsync(
+            httpContext,
             CookiesSettings.AuthenticateScheme,
             claimsPrincipal,
-            AuthenticationProperties)
+            authenticationProperties)
         .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
     public async Task SignOutAsync()
     {
-        if (HttpContextAccessor.HttpContext is null)
-        {
-            throw new ArgumentNullException(nameof(HttpContextAccessor.HttpContext));
-        }
+        var httpContext = HttpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(HttpContextAccessor.HttpContext));
 
-        await AuthenticationService.SignOutAsync(
-            HttpContextAccessor.HttpContext,
+        await GetAuthenticationService(httpContext).SignOutAsync(
+            httpContext,
             CookiesSettings.AuthenticateScheme,
-            AuthenticationProperties).ConfigureAwait(false);
+            null).ConfigureAwait(false);
     }
+
+    // IAuthenticationService es scoped: el de la petición, y el del registro sólo si la petición no tiene contenedor.
+    private IAuthenticationService GetAuthenticationService(HttpContext httpContext)
+        => httpContext.RequestServices?.GetService<IAuthenticationService>() ?? AuthenticationService;
 }
