@@ -35,8 +35,8 @@ public interface IPasswordService
     /// </summary>
     /// <param name="plainPassword">Contraseña de texto a cifrar.</param>
     /// <remarks>
-    /// Lanza una excepción si el servicio está desactivado o si la configuración pide más de 10.000.000 de iteraciones,
-    /// el máximo que acepta <c>Verify</c>.
+    /// Lanza una excepción si el servicio está desactivado o si la configuración produciría hashes que <c>Verify</c>
+    /// rechaza.
     /// </remarks>
     /// <returns>(string? hashPassword, List{PasswordErrorResult} errors).</returns>
     (string? hashPassword, ReadOnlyCollection<PasswordErrorResult> errors) Create(string? plainPassword);

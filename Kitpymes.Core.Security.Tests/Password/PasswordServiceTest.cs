@@ -683,10 +683,36 @@ namespace Kitypmes.Core.Security.Tests
             // y NeedsRehash pedía regenerarlo en cada inicio de sesión. Se comprueba antes que la política.
             var service = CreateService(1, 10_000_001);
 
-            var exception = Assert.Throws<Exception>(() => service.Create(plainPassword));
+            var exception = Assert.ThrowsExactly<global::Kitpymes.Core.Shared.Util.SharedException>(() => service.Create(plainPassword));
 
             StringAssert.Contains(exception.Message, "IterCount");
             StringAssert.Contains(exception.Message, "10000000");
+        }
+
+        [TestMethod]
+        [DataRow("Password")]
+        [DataRow("a")]
+        public void Create_Passing_SaltLengthAboveLimit_Throws(string plainPassword)
+        {
+            // Mismo fallo con la sal: Verify rechaza una sal de más de 1024 bytes y Create la aceptaba.
+            var service = CreateService(1, 1000, 1025);
+
+            var exception = Assert.ThrowsExactly<global::Kitpymes.Core.Shared.Util.SharedException>(() => service.Create(plainPassword));
+
+            StringAssert.Contains(exception.Message, "SaltLength");
+            StringAssert.Contains(exception.Message, "1024");
+        }
+
+        [TestMethod]
+        public void Create_Passing_SaltLengthAtLimit_CreatesHashThatVerifies()
+        {
+            var service = CreateService(1, 1000, 1024);
+
+            var (hashPassword, errors) = service.Create(PlainPassword);
+
+            Assert.AreEqual(0, errors.Count);
+            Assert.IsTrue(service.Verify(PlainPassword, hashPassword));
+            Assert.IsFalse(service.NeedsRehash(hashPassword));
         }
 
         [TestMethod]
