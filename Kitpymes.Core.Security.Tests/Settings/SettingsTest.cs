@@ -31,6 +31,7 @@ namespace Kitypmes.Core.Security.Tests
         [DataRow(typeof(JsonWebTokenSettings), nameof(JsonWebTokenSettings.SaveToken))]
         [DataRow(typeof(JsonWebTokenSettings), nameof(JsonWebTokenSettings.IncludeErrorDetails))]
         [DataRow(typeof(JsonWebTokenSettings), nameof(JsonWebTokenSettings.ValidateLifetime))]
+        [DataRow(typeof(JsonWebTokenSettings), nameof(JsonWebTokenSettings.ClockSkewSeconds))]
         [DataRow(typeof(OAuthSettings), nameof(OAuthSettings.Enabled))]
         [DataRow(typeof(AuthenticationSettings), nameof(AuthenticationSettings.Enabled))]
         [DataRow(typeof(AuthorizationSettings), nameof(AuthorizationSettings.Enabled))]
@@ -131,6 +132,7 @@ namespace Kitypmes.Core.Security.Tests
             Assert.AreEqual(true, jwt.SaveToken);
             Assert.AreEqual(true, jwt.IncludeErrorDetails);
             Assert.AreEqual(true, jwt.ValidateLifetime);
+            Assert.AreEqual(60, jwt.ClockSkewSeconds);
 
             var encryptor = new EncryptorSettings();
             Assert.AreEqual(false, encryptor.Enabled);

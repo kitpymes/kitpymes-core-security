@@ -179,7 +179,8 @@ namespace Kitypmes.Core.Security.Tests
                 .WithValidateLifetime(false)
                 .WithRequireExpirationTime(false)
                 .WithIssuer("https://emisor")
-                .WithAudience("https://audiencia"));
+                .WithAudience("https://audiencia")
+                .WithClockSkew(5));
 
             var options = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>().Get(JwtBearerDefaults.AuthenticationScheme);
             var parameters = options.TokenValidationParameters;
@@ -194,7 +195,7 @@ namespace Kitypmes.Core.Security.Tests
             Assert.AreEqual("https://emisor", parameters.ValidIssuer);
             Assert.IsTrue(parameters.ValidateAudience);
             Assert.AreEqual("https://audiencia", parameters.ValidAudience);
-            Assert.AreEqual(TimeSpan.Zero, parameters.ClockSkew);
+            Assert.AreEqual(TimeSpan.FromSeconds(5), parameters.ClockSkew);
 
             var key = (RsaSecurityKey)parameters.IssuerSigningKey;
             Assert.IsFalse(key.CryptoProviderFactory.CacheSignatureProviders);
@@ -216,6 +217,7 @@ namespace Kitypmes.Core.Security.Tests
             Assert.IsTrue(parameters.RequireExpirationTime);
             Assert.IsFalse(parameters.ValidateIssuer);
             Assert.IsFalse(parameters.ValidateAudience);
+            Assert.AreEqual(TimeSpan.FromSeconds(60), parameters.ClockSkew);
 
 #if DEBUG
             Assert.IsTrue(Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII);
@@ -365,6 +367,80 @@ namespace Kitypmes.Core.Security.Tests
             var token = CreateToken(privateKey, DateTime.UtcNow.AddMinutes(-20), DateTime.UtcNow.AddMinutes(-10));
 
             Assert.IsTrue(await IsValidAsync(token, parameters));
+        }
+
+        [TestMethod]
+        [DataRow(30, true)]
+        [DataRow(120, false)]
+        public async Task JsonWebToken_Validation_WithDefaultClockSkew_NotYetValid(int secondsAhead, bool expected)
+        {
+            // Margen por defecto de 60 s: un token que empieza a valer dentro de 30 s ya vale (el reloj del emisor puede ir
+            // adelantado); uno que empieza dentro de 2 minutos, no.
+            var (privateKey, publicKey) = CreateKeys();
+            var parameters = GetValidationParameters(privateKey, publicKey);
+
+            var token = CreateToken(privateKey, DateTime.UtcNow.AddSeconds(secondsAhead), DateTime.UtcNow.AddMinutes(20));
+
+            var result = await ValidateAsync(token, parameters);
+
+            Assert.AreEqual(expected, result.IsValid);
+
+            if (!expected)
+            {
+                Assert.IsInstanceOfType<SecurityTokenNotYetValidException>(result.Exception);
+            }
+        }
+
+        [TestMethod]
+        [DataRow(30, true)]
+        [DataRow(120, false)]
+        public async Task JsonWebToken_Validation_WithDefaultClockSkew_Expired(int secondsAgo, bool expected)
+        {
+            var (privateKey, publicKey) = CreateKeys();
+            var parameters = GetValidationParameters(privateKey, publicKey);
+
+            var token = CreateToken(privateKey, DateTime.UtcNow.AddMinutes(-20), DateTime.UtcNow.AddSeconds(-secondsAgo));
+
+            var result = await ValidateAsync(token, parameters);
+
+            Assert.AreEqual(expected, result.IsValid);
+
+            if (!expected)
+            {
+                Assert.IsInstanceOfType<SecurityTokenExpiredException>(result.Exception);
+            }
+        }
+
+        [TestMethod]
+        public async Task JsonWebToken_Validation_WithClockSkewZero_Rejects_TokenStartingSoon()
+        {
+            var (privateKey, publicKey) = CreateKeys();
+            var parameters = GetValidationParameters(privateKey, publicKey, x => x.WithClockSkew(0));
+
+            var token = CreateToken(privateKey, DateTime.UtcNow.AddSeconds(30), DateTime.UtcNow.AddMinutes(20));
+
+            var result = await ValidateAsync(token, parameters);
+
+            Assert.IsFalse(result.IsValid);
+            Assert.IsInstanceOfType<SecurityTokenNotYetValidException>(result.Exception);
+        }
+
+        [TestMethod]
+        public void JsonWebTokenOptions_WithClockSkew_Negative_Throws()
+        {
+            Assert.ThrowsExactly<global::Kitpymes.Core.Shared.Util.SharedException>(() => new JsonWebTokenOptions().WithClockSkew(-1));
+        }
+
+        [TestMethod]
+        public void JsonWebTokenSettings_ClockSkewSeconds_Ignores_Negative()
+        {
+            var settings = new JsonWebTokenSettings { ClockSkewSeconds = -5 };
+
+            Assert.AreEqual(JsonWebTokenSettings.DefaultClockSkewSeconds, settings.ClockSkewSeconds);
+
+            settings.ClockSkewSeconds = 0;
+
+            Assert.AreEqual(0, settings.ClockSkewSeconds);
         }
 
         #endregion JsonWebToken
@@ -763,6 +839,38 @@ namespace Kitypmes.Core.Security.Tests
 
             await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => service.SignInAsync(new[] { new Claim(ClaimTypes.Name, "ana") }));
             registeredAuthentication.VerifyNoOtherCalls();
+        }
+
+        [TestMethod]
+        public void LoadCookies_Registers_CookiesService_PerRequest()
+        {
+            // Hasta la 2.5.2 era un singleton creado al registrar, con un IAuthenticationService de un contenedor temporal.
+            var services = new ServiceCollection();
+            var provider = LoadCookies(services);
+
+            Assert.AreEqual(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(ICookiesService)).Lifetime);
+
+            using var scope1 = provider.CreateScope();
+            using var scope2 = provider.CreateScope();
+
+            var first = scope1.ServiceProvider.GetRequiredService<ICookiesService>();
+
+            Assert.AreSame(first, scope1.ServiceProvider.GetRequiredService<ICookiesService>());
+            Assert.AreNotSame(first, scope2.ServiceProvider.GetRequiredService<ICookiesService>());
+        }
+
+        [TestMethod]
+        public void LoadCookies_CookiesService_Resolves_With_ValidateScopes()
+        {
+            // Con la validación de ámbitos de Development, un servicio por petición se resuelve dentro de un ámbito.
+            var services = new ServiceCollection();
+            LoadCookies(services);
+
+            using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
+            using var scope = provider.CreateScope();
+
+            Assert.IsInstanceOfType<CookiesService>(scope.ServiceProvider.GetRequiredService<ICookiesService>());
+            Assert.ThrowsExactly<InvalidOperationException>(() => provider.GetRequiredService<ICookiesService>());
         }
 
         #endregion Cookies

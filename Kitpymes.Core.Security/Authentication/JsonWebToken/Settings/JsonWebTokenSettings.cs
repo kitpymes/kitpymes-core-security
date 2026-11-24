@@ -67,6 +67,11 @@ public class JsonWebTokenSettings
     /// </summary>
     public const bool DefaultValidateLifetime = true;
 
+    /// <summary>
+    /// Valor por defecto del margen de reloj, en segundos, al validar las fechas del token.
+    /// </summary>
+    public const int DefaultClockSkewSeconds = 60;
+
     private bool _enabled = DefaultEnabled;
     private string _authenticateScheme = DefaultAuthenticateScheme;
     private string _challengeScheme = DefaultChallengeScheme;
@@ -75,6 +80,7 @@ public class JsonWebTokenSettings
     private bool _includeErrorDetails = DefaultIncludeErrorDetails;
     private bool _requireExpirationTime = DefaultRequireExpirationTime;
     private bool _validateLifetime = DefaultValidateLifetime;
+    private int _clockSkewSeconds = DefaultClockSkewSeconds;
 
     /// <summary>
     /// Obtiene o establece un valor que indica el servicio esta habilitado.
@@ -201,6 +207,23 @@ public class JsonWebTokenSettings
             if (value.HasValue)
             {
                 _validateLifetime = value.Value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Obtiene o establece el margen de reloj, en segundos, que se tolera al validar nbf y exp: absorbe el desfase
+    /// entre el servidor que emite el token y el que lo valida.
+    /// <para><strong>Default:</strong> <see cref="DefaultClockSkewSeconds"/> = 60. Un valor negativo se ignora.</para>
+    /// </summary>
+    public int? ClockSkewSeconds
+    {
+        get => _clockSkewSeconds;
+        set
+        {
+            if (value.HasValue && value.Value >= 0)
+            {
+                _clockSkewSeconds = value.Value;
             }
         }
     }

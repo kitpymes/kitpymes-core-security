@@ -117,8 +117,8 @@ public static class JsonWebTokenServiceCollectionExtensions
 
                         RequireExpirationTime = settings.RequireExpirationTime!.Value,
 
-                        // Establezca clockskew en cero para que los tokens caduquen exactamente a la hora de vencimiento del token (en lugar de 5 minutos más tarde)
-                        ClockSkew = TimeSpan.Zero,
+                        // Margen para el desfase de reloj entre servidores (por defecto 60 s; el de IdentityModel es 5 min).
+                        ClockSkew = TimeSpan.FromSeconds(settings.ClockSkewSeconds!.Value),
                     };
 
                     // Los eventos que no se nombran se quedan con el comportamiento por defecto (no hacen nada).
