@@ -226,21 +226,45 @@ public static class JsonWebTokenServiceCollectionExtensions
 
 ### Password
 
+Hash de contraseñas con PBKDF2 (por defecto HMACSHA256 con 600.000 iteraciones, la cifra que recomienda OWASP) y una política de contraseñas configurable.
+
 ```cs
 public interface IPasswordService
 {
+    // Contraseña al azar que cumple la política; null si no se puede (por ejemplo, más caracteres únicos que los disponibles).
     string? CreateRandom();
-    
-    (bool hasErrors, string? hashPassword, List<PasswordResult>? errors) Create(string? plainPassword);
 
-    bool Verify(string? plainPassword, string hashPassword);
+    // Comprueba la política y crea el hash. Si la contraseña no la cumple, hashPassword es null y errors dice por qué.
+    (string? hashPassword, ReadOnlyCollection<PasswordErrorResult> errors) Create(string? plainPassword);
 
-    (bool hasErrors, List<PasswordResult>? errors) Validate(string? plainPassword);
+    // Compara con el hash. Lee algoritmo, iteraciones y sal del propio hash, y no aplica la política.
+    bool Verify(string? plainPassword, string? hashPassword);
+
+    // true si el hash se creó con parámetros distintos de la configuración actual: hay que regenerarlo.
+    bool NeedsRehash(string? hashPassword) => false;
+
+    ReadOnlyCollection<PasswordErrorResult> Validate(string? plainPassword);
 }
 ```
 
+Inicio de sesión, regenerando los hashes antiguos (por ejemplo, al subir `IterCount`):
+
 ```cs
-public enum PasswordResult
+if (passwordService.Verify(password, user.PasswordHash))
+{
+    if (passwordService.NeedsRehash(user.PasswordHash))
+    {
+        var (hash, _) = passwordService.Create(password);
+
+        user.PasswordHash = hash!;
+    }
+}
+```
+
+Cada `Verify` calcula PBKDF2: limitar en la aplicación la frecuencia de intentos de inicio de sesión.
+
+```cs
+public enum PasswordErrorResult
 {
     RequiredValue,
 
@@ -261,31 +285,65 @@ public enum PasswordResult
 ```cs
 public class PasswordSettings
 {
-    public bool? Enabled { get; set; }
+    public bool? Enabled { get; set; }                 // false
 
-    public bool? RequireDigit { get; set; }
+    public bool? RequireDigit { get; set; }            // false
 
-    public bool? RequireLowercase { get; set; }
+    public bool? RequireLowercase { get; set; }        // false
 
-    public bool? RequireUppercase { get; set; }
+    public bool? RequireUppercase { get; set; }        // false
 
-    public bool? RequireEspecialChars { get; set; }
+    public bool? RequireEspecialChars { get; set; }    // false
 
-    public bool? RequiredUniqueChars { get; set; }
+    public bool? RequiredUniqueChars { get; set; }     // false: sin caracteres repetidos
 
-    public int? RequiredMinLength { get; set; }
+    public int? RequiredMinLength { get; set; }        // 6; un valor menor que 1 se ignora
+
+    public EncryptionSettings EncryptionSettings { get; set; } = new EncryptionSettings();
 }
 ```
 
 ```cs
-public static class PasswordServiceCollectionExtensions
+public partial class EncryptionSettings
 {
-    public static IPasswordService GetPassword(this IServiceCollection services) {}
+    public byte? FormatMarker { get; set; }            // 0xC0; no cambiarlo con hashes guardados
 
-    public static IServiceCollection LoadPassword(this IServiceCollection services, Action<PasswordOptions>? options = null, bool enabled = true) {}
+    public int? IterCount { get; set; }                // 600000; Create lanza por encima de 10.000.000
 
-    public static IServiceCollection LoadPassword(this IServiceCollection services, PasswordSettings settings) {}
+    public int? HeaderByteLength { get; set; }         // 13; no cambiarlo con hashes guardados
+
+    public int? KeyDerivationAlgorithm { get; set; }   // 1 (0 = HMACSHA1, 1 = HMACSHA256, 2 = HMACSHA512)
+
+    public int? SaltLength { get; set; }               // 16; Create lanza por encima de 1024
 }
+```
+
+```cs
+public class PasswordOptions
+{
+    public PasswordOptions WithEnabled(bool enabled = true) {}
+
+    public PasswordOptions WithRequireDigit(bool requireDigit = true) {}
+
+    public PasswordOptions WithRequireLowercase(bool requireLowercase = true) {}
+
+    public PasswordOptions WithRequireUppercase(bool requireUppercase = true) {}
+
+    public PasswordOptions WithRequireEspecialCharacters(bool requireEspecialChars = true) {}
+
+    public PasswordOptions WithRequiredUniqueChars(bool requiredUniqueChars = true) {}
+
+    public PasswordOptions WithRequiredMinLength(int requiredMinLength = 6) {}
+}
+```
+
+```cs
+services.LoadSecurity(security => security.WithPassword(password => password
+    .WithEnabled()
+    .WithRequireDigit()
+    .WithRequiredMinLength(10)));
+
+var passwordService = services.GetPassword();
 ```
 
 ## ⚙️ Pruebas Unitarias
