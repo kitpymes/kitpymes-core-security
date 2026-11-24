@@ -45,8 +45,9 @@ public partial class EncryptionSettings
     private string _algorithmName = HashAlgorithmName.SHA256.ToString();
 
     /// <summary>
-    /// Obsoleto: no se usa. El algoritmo lo marca <see cref="KeyDerivationAlgorithm"/> al crear el hash, y al verificar se lee del propio hash.
-    /// Antes, <c>Verify</c> exigía que coincidiera con el algoritmo del hash.
+    /// Obtiene o establece el nombre de un algoritmo hash criptográfico. Obsoleto: no se usa. El algoritmo lo marca
+    /// <see cref="KeyDerivationAlgorithm"/> al crear el hash, y al verificar se lee del propio hash. Antes, <c>Verify</c>
+    /// exigía que coincidiera con el algoritmo del hash.
     /// </summary>
     [Obsolete("No se usa: el algoritmo lo marca KeyDerivationAlgorithm y Verify lo lee del hash. Se elimina en 3.0.0.", DiagnosticId = "KPY0004")]
     [EditorBrowsable(EditorBrowsableState.Never)]
