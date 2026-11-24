@@ -30,7 +30,10 @@ internal static class UserSessionClaim
         }
         catch (JsonException)
         {
-            // Una claim mal formada es una petición sin sesión válida: se deniega, no se lanza.
+            // Excepción a "todo catch registra la excepción": aquí no hay logger y el error es una entrada esperada
+            // (una claim que no es una sesión), no un fallo del sistema. No se registra porque el mensaje de
+            // JsonException puede llevar parte del valor de la claim, que es dato personal. Cuenta como sin sesión y
+            // el manejador deniega.
             return null;
         }
     }

@@ -10,7 +10,6 @@ namespace Kitpymes.Core.Security.Authentication.Cookies.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Kitpymes.Core.Security.Authentication.Cookies;
 using Kitpymes.Core.Shared.Extensions;
@@ -95,19 +94,51 @@ public class CustomCookieAuthenticationEvents(IHttpContextAccessor httpContextAc
 
         var username = httpContext?.User?.Identity?.Name;
 
-        // No se usa HttpContext.ToDetails de Shared: lee las claims como JSON (lanza con el nombre en texto plano, que
-        // es como lo pone ASP.NET Core) y, sin usuario, pone en el mensaje el del servidor.
-        var details = new Dictionary<string, string?>
+        var optionalData = new Dictionary<string, IEnumerable<object>>
         {
-            ["Request"] = httpContext is null ? null : $"{httpContext.Request.Method} {httpContext.Request.Path}".Trim(),
-            ["AccessDeniedDateTime"] = DateTime.UtcNow.ToLongDateString(),
+            { "AccessDeniedDateTime",  new[] { DateTime.UtcNow.ToLongDateString() } },
         };
 
         if (!username.ToIsNullOrEmpty())
         {
-            details["Username"] = username;
+            optionalData.ToAddOrUpdate("Username", username);
         }
 
-        return Task.FromException(new UnauthorizedAccessException(JsonSerializer.Serialize(details)));
+        return Task.FromException(new UnauthorizedAccessException(ToDetails(httpContext, username, optionalData).ToSerialize()));
+    }
+
+    // Los mismos campos que HttpContext.ToDetails de Shared 2.0.1, que no se usa: lee la claim del nombre como JSON
+    // (lanza JsonException con el nombre en texto plano, que es como lo pone ASP.NET Core) y, sin usuario, pone en
+    // User el del sistema operativo del servidor.
+    private static Dictionary<string, object> ToDetails(HttpContext? httpContext, string? username, object optionalData)
+    {
+        var details = new Dictionary<string, object>
+        {
+            ["User"] = username.ToIsNullOrEmpty() ? "Anonymous" : username!,
+        };
+
+        if (httpContext is not null)
+        {
+            if (httpContext.ToTryIPv6(out var ip))
+            {
+                details["IP"] = ip!;
+            }
+
+            if (httpContext.Request.ToTryHeader("User-Agent", out var userAgents))
+            {
+                details["UserAgent"] = userAgents!;
+            }
+
+            if (httpContext.Request.ToTryContentType(out var contentType))
+            {
+                details["ContentType"] = contentType!;
+            }
+
+            details["Request"] = httpContext.Request.ToPath();
+        }
+
+        details["OptionalData"] = optionalData;
+
+        return details;
     }
 }
