@@ -1,3 +1,10 @@
+# v.2.6.2
+Parche: las claims con un valor que no es JSON ya no lanzan JsonException. Sin cambios en la API pública.
+Corrección de un fallo: RoleRequirementHandler y PermissionRequirementHandler leían la sesión de la claim ApiSession.UserClaimType como JSON y, si el valor no lo era, lanzaban JsonException: la petición terminaba en un error 500 en vez de denegarse. Ahora una claim mal formada cuenta como usuario sin sesión y la autorización falla con "Necesita ingresar al sistema...".
+Corrección de un fallo: CustomCookieAuthenticationEvents.RedirectToAccessDenied lanzaba JsonException con el nombre de usuario en texto plano, que es como lo pone ASP.NET Core, en vez de UnauthorizedAccessException. Además, sin usuario, ponía en el mensaje el nombre del usuario del sistema operativo del servidor. Ahora el mensaje es un JSON propio con Request (método y ruta), AccessDeniedDateTime y Username (sólo si hay usuario), y ya no usa HttpContext.ToDetails de Shared.
+- Quien leyera otros campos de ese mensaje: ya no están.
+- El paquete se compara al empaquetar con la API pública de la 2.6.1 (validación de paquete).
+
 # v.2.6.1
 Parche: corrige un fallo de la política de autorización por defecto, sin cambiar la API pública.
 Corrección de un fallo: con AuthorizationSettings.DefaultPolicy.RequiredSchemes = true y sin RequireAuthenticatedUser, la política por defecto se quedaba sin requisitos y ASP.NET Core lanzaba InvalidOperationException ("AuthorizationPolicy must have at least one requirement") al resolver las opciones de autorización: la aplicación fallaba en la primera petición que las necesitaba. Ahora se parte de la política por defecto vigente, con sus requisitos y esquemas, y se le añade el esquema del JWT: la de ASP.NET Core (exige usuario autenticado) o, si la aplicación ya había registrado la suya antes de LoadSecurity, la de la aplicación. Si no hay esquema de JWT que añadir (JWT no habilitado en la configuración), RequiredSchemes no hace nada y se queda la política vigente.

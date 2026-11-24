@@ -10,7 +10,6 @@ namespace Kitpymes.Core.Security.Authorization.Requirements;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Kitpymes.Core.Api.ApiSession;
 using Kitpymes.Core.Shared.Extensions;
 using Microsoft.AspNetCore.Authorization;
 
@@ -35,7 +34,7 @@ public class PermissionRequirementHandler : AuthorizationHandler<PermissionRequi
     /// <inheritdoc/>
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
-        var user = context.User.ToGet<UserSession>(ApiSession.UserClaimType);
+        var user = UserSessionClaim.Get(context.User);
 
         if (user.ToIsNullOrEmpty())
         {

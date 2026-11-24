@@ -10,6 +10,7 @@ namespace Kitpymes.Core.Security.Authentication.Cookies.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Kitpymes.Core.Security.Authentication.Cookies;
 using Kitpymes.Core.Shared.Extensions;
@@ -88,22 +89,25 @@ public class CustomCookieAuthenticationEvents(IHttpContextAccessor httpContextAc
     // }
 
     /// <inheritdoc/>
-    public override async Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context)
+    public override Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context)
     {
-        var username = httpContextAccessor.HttpContext?.User?.Identity?.Name;
+        var httpContext = httpContextAccessor.HttpContext;
 
-        var optionalData = new Dictionary<string, IEnumerable<object>>
+        var username = httpContext?.User?.Identity?.Name;
+
+        // No se usa HttpContext.ToDetails de Shared: lee las claims como JSON (lanza con el nombre en texto plano, que
+        // es como lo pone ASP.NET Core) y, sin usuario, pone en el mensaje el del servidor.
+        var details = new Dictionary<string, string?>
         {
-            { "AccessDeniedDateTime",  new[] { DateTime.UtcNow.ToLongDateString() } },
+            ["Request"] = httpContext is null ? null : $"{httpContext.Request.Method} {httpContext.Request.Path}".Trim(),
+            ["AccessDeniedDateTime"] = DateTime.UtcNow.ToLongDateString(),
         };
 
         if (!username.ToIsNullOrEmpty())
         {
-            optionalData.ToAddOrUpdate("Username", username);
+            details["Username"] = username;
         }
 
-        await Task.CompletedTask.ConfigureAwait(false);
-
-        throw new UnauthorizedAccessException(httpContextAccessor.HttpContext?.ToDetails(optionalData).ToSerialize());
+        return Task.FromException(new UnauthorizedAccessException(JsonSerializer.Serialize(details)));
     }
 }
