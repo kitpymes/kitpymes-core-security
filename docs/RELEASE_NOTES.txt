@@ -1,3 +1,10 @@
+# v.2.4.1
+Parche: corrige un fallo de Create, sin cambiar la API pública.
+Corrección de un fallo: Create aceptaba una configuración con más de 10.000.000 iteraciones (IterCount), aunque desde la 2.3.0 Verify rechaza esos hashes. El hash creado no verificaba nunca y NeedsRehash pedía regenerarlo en cada inicio de sesión. Ahora Create lanza una excepción (SharedException, como cuando el servicio está desactivado) con IterCount por encima de 10.000.000, antes de comprobar la contraseña.
+- Afecta sólo a quien configura IterCount por encima de 10.000.000. Con el valor por defecto (600000) o cualquier valor hasta 10.000.000, nada cambia.
+- Sin cambios en Verify ni en NeedsRehash.
+- El paquete se compara al empaquetar con la API pública de la 2.4.0 (validación de paquete).
+
 # v.2.4.0
 Versión menor: Verify deja de aplicar la política de contraseñas y sube el número de iteraciones por defecto, sin romper la API pública.
 CAMBIO DE COMPORTAMIENTO: Verify ya no aplica la política de contraseñas (longitud mínima, dígito, minúscula, mayúscula, caracteres especiales, caracteres únicos): sólo comprueba la contraseña contra el hash. La política se comprueba únicamente en Create, al crear o cambiar la contraseña. Hasta la 2.3.0, endurecer la política hacía que las contraseñas guardadas que no la cumplían dejaran de verificar; ahora siguen entrando, y si se quiere obligar a cambiarlas hay que hacerlo en la aplicación (por ejemplo, con Validate después de un Verify correcto).
