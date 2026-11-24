@@ -121,7 +121,7 @@ public class JsonWebTokenOptions
     /// Margen de reloj, en segundos, que se tolera al validar las fechas del token.
     /// </summary>
     /// <param name="clockSkewSeconds">Segundos de margen; 0 para no tolerar ninguno.</param>
-    /// <returns>JsonWebTokenOptions | ArgumentException: si clockSkewSeconds es negativo.</returns>
+    /// <returns>JsonWebTokenOptions | SharedException: si clockSkewSeconds es negativo.</returns>
     public JsonWebTokenOptions WithClockSkew(int clockSkewSeconds = JsonWebTokenSettings.DefaultClockSkewSeconds)
     {
         JsonWebTokenSettings.ClockSkewSeconds = clockSkewSeconds.ToThrowIfLess(0);
