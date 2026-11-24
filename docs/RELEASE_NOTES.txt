@@ -1,3 +1,10 @@
+# v.2.2.0
+Versión menor y no parche: corrige un fallo de Verify y cambia su comportamiento con un hash nulo o vacío, sin cambiar la API pública.
+CAMBIO DE COMPORTAMIENTO: Verify(contraseña, hash) con el hash nulo, vacío o sólo con espacios devuelve false. Hasta la 2.1.1 lanzaba SharedException (la documentación decía ArgumentException). Quien capturase esa excepción para tratar "usuario sin contraseña" tiene que mirar el false. Con la contraseña nula o vacía ya devolvía false y sigue igual.
+Corrección de un fallo: Verify aceptaba un hash con un código de algoritmo desconocido en la cabecera (cualquier valor distinto de 0, 1 y 2) y lo trataba como HMACSHA256. Con la configuración por defecto, un hash bueno con esa parte de la cabecera cambiada se daba por válido. Ahora es un hash mal formado y devuelve false. Los hashes creados por Create no cambian y se siguen verificando igual.
+- Tests nuevos: contraseña incorrecta, cualquier byte del hash cambiado, hash nulo o vacío, hash mal formado, cortado o con bytes de más, de otro algoritmo o con otro número de iteraciones o de longitud de sal.
+- El paquete se compara al empaquetar con la API pública de la 2.1.1 (validación de paquete).
+
 # v.2.1.1
 Parche: corrige un fallo de la generación de contraseñas, sin cambiar la API pública.
 Corrección de un fallo: CreateRandom duplicaba la contraseña cuando los caracteres obligatorios (dígito, especial, minúscula, mayúscula y el de caracteres únicos) ya llegaban a RequiredMinLength. Salía del doble de largo y con cada carácter repetido (por ejemplo "1@aB1@aB"), y con RequiredUniqueChars devolvía siempre null. Ahora sólo se rellena cuando falta longitud, así que la contraseña tiene exactamente los caracteres obligatorios.
