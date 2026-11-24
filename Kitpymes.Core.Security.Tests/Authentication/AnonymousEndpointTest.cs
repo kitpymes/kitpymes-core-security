@@ -74,5 +74,26 @@ namespace Kitpymes.Core.Security.Tests.Authentication
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         }
+
+        [TestMethod]
+        public async Task PrivateEndpoint_WithInvalidToken_Throws_WithTokenError()
+        {
+            // En una ruta que pide usuario sigue saliendo UnauthorizedAccessException con el error del token, como antes.
+            await using var app = await StartAppAsync();
+
+            var exception = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => GetAsync(app, "/privado", "no-es-un-token"));
+
+            StringAssert.StartsWith(exception.Message, "IDX14100");
+        }
+
+        [TestMethod]
+        public async Task PrivateEndpoint_WithoutToken_Throws_DefaultMessage()
+        {
+            await using var app = await StartAppAsync();
+
+            var exception = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => GetAsync(app, "/privado", null));
+
+            Assert.AreEqual("invalid_token: This request requires a valid JWT access token to be provided", exception.Message);
+        }
     }
 }
