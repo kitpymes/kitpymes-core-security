@@ -7,6 +7,7 @@
 
 namespace Kitpymes.Core.Security.Authorization;
 
+using System.Linq;
 using Kitpymes.Core.Security.Authentication.JsonWebToken.Settings;
 using Kitpymes.Core.Security.Authorization.Settings;
 using Kitpymes.Core.Shared.Extensions;
@@ -70,7 +71,14 @@ public static class AuthorizationCollectionExtensions
                         builder.RequireAuthenticatedUser();
                     }
 
-                    if (settings.HasDefaultPolicy)
+                    // Una política sin requisitos no se puede construir: con sólo RequiredSchemes, se usan los de la
+                    // política por defecto de ASP.NET Core (usuario autenticado) con los esquemas añadidos.
+                    if (builder.Requirements.Count == 0)
+                    {
+                        builder.AddRequirements(x.DefaultPolicy.Requirements.ToArray());
+                    }
+
+                    if (builder.AuthenticationSchemes.Count > 0 || settings.DefaultPolicy.RequireAuthenticatedUser == true)
                     {
                         x.DefaultPolicy = builder.Build();
                     }
