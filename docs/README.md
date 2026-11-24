@@ -142,86 +142,61 @@ public interface IEncryptorService
 
 ### JsonWebToken
 
+Tokens firmados con RSA (`PrivateKey` para crearlos y `PublicKey` para validarlos, en base64). La validación la hace IdentityModel: firma, nbf y exp (con un margen de reloj de 60 segundos por defecto), y emisor y audiencia si se configuran.
+
 ```cs
 public interface IJsonWebTokenService
 {
-    (string Token, string Expire) Encode(IList<Claim> claims, Dictionary<string, object>? headers = null);
+    GetJsonWebTokenResult Get(string? token);
 
-    Dictionary<string, object> Decode(string? token);
+    CreateJsonWebTokenResult Create(Claim claim, IDictionary<string, IEnumerable<string>>? headers = null);
 
-    Task<(string Token, string Expire)> EncodeAsync(IList<Claim> claims, Dictionary<string, object>? headers = null);
-
-    Task<Dictionary<string, object>> DecodeAsync(string? token);
-}
-```
-
-```cs
-public class ExpireSettings
-{
-    public int? Days { get; set; }
-
-    public int? Hours { get; set; }
-
-    public int? Minutes { get; set; }
-
-    public int? Seconds { get; set; }
+    CreateJsonWebTokenResult Create(IEnumerable<Claim> claims, IDictionary<string, IEnumerable<string>>? headers = null);
 }
 ```
 
 ```cs
 public class JsonWebTokenSettings
 {
-    [JsonIgnore]
-    public TokenValidationParameters TokenValidationParameters => new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = !string.IsNullOrWhiteSpace(Key),
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key)),
+    public bool? Enabled { get; set; }                  // false
 
-        ValidateIssuer = !string.IsNullOrWhiteSpace(ValidIssuer),
-        ValidIssuer = ValidIssuer,
+    public string? AuthenticateScheme { get; set; }     // "Bearer"
 
-        ValidateAudience = !string.IsNullOrWhiteSpace(ValidAudience),
-        ValidAudience = ValidAudience,
+    public string? ChallengeScheme { get; set; }        // "Bearer"
 
-        ValidateLifetime = !(LifetimeValidator is null),
-        LifetimeValidator = LifetimeValidator,
+    public bool? RequireHttpsMetadata { get; set; }     // true
 
-        // Tiempo de caducidad del búfer, el tiempo efectivo total es igual al tiempo más el tiempo de caducidad de Jwt. Si no está configurado, el valor predeterminado es 5 minutos.
-        ClockSkew = TimeSpan.FromSeconds(30),
+    public bool? RequireExpirationTime { get; set; }    // true
 
-        RequireExpirationTime = _requireExpirationTime,
-    };
+    public bool? SaveToken { get; set; }                // true
 
-    [JsonIgnore]
-    public LifetimeValidator LifetimeValidator { get; set; } = (before, expires, token, param) => expires > DateTime.UtcNow;
+    public bool? IncludeErrorDetails { get; set; }      // true
 
-    public ExpireSettings Expire { get; set; } = new ExpireSettings();
+    public bool? ValidateLifetime { get; set; }         // true: se validan nbf y exp
 
-    public bool? Enabled { get; set; }
+    public int? ClockSkewSeconds { get; set; }          // 60: margen de reloj al validar nbf y exp; un negativo se ignora
 
-    public string? ValidAudience { get; set; }
+    public ExpireSettings Expire { get; set; } = new ExpireSettings();   // 30 días: duración de los tokens que crea Create
 
-    public string? ValidIssuer { get; set; }
+    public string? PublicKey { get; set; }
 
-    public string? Key { get; set; }
+    public string? PrivateKey { get; set; }
 
-    public string? AuthenticateScheme { get; set; }
+    public string? Issuer { get; set; }                 // si se pone, se valida
 
-    public string? ChallengeScheme { get; set; }
-
-    public bool? RequireExpirationTime { get; set; }
+    public string? Audience { get; set; }               // si se pone, se valida
 }
 ```
 
 ```cs
-public static class JsonWebTokenServiceCollectionExtensions
-{
-    public static IJsonWebTokenService GetJsonWebToken(this IServiceCollection services) {}
+services.LoadSecurity(security => security.WithAuthentication(authentication => authentication
+    .WithJsonWebToken(jwt => jwt
+        .WithEnabled()
+        .WithPrivateKey(privateKey)
+        .WithPublicKey(publicKey)
+        .WithClockSkew(60))));
 
-    public static IServiceCollection LoadJsonWebToken(this IServiceCollection services, Action<JsonWebTokenOptions>? options = null, bool enabled = true) {}
-
-    public static IServiceCollection LoadJsonWebToken(this IServiceCollection services, JsonWebTokenSettings settings) {}
-}
+var jsonWebTokenService = services.GetAuthJsonWebToken();
 ```
 
 ### Password
