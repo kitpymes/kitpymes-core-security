@@ -10,7 +10,7 @@
             "RequiredMinLength": 7, // (int) Default: 6
             "EncryptionSettings": {
                 "FormatMarker": null, // (byte) Default: 0xC0
-                "IterCount": null, // (int) Default: 50000
+                "IterCount": null, // (int) Default: 600000
                 "HeaderByteLength": null, // (int) Default: 13
                 "KeyDerivationAlgorithm": null, // (int) Default: 1 | Options (0 = HMACSHA1, 1 = HMACSHA256, 2 = HMACSHA512)
                 "SaltLength": null, // (int) Default: 16 | Options (16 = 128 bits, 32 = 256 bits, 64 = 512 bits)

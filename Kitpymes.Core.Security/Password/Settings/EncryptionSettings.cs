@@ -34,7 +34,11 @@ public partial class EncryptionSettings
     /// <summary>
     /// Valor por defecto que indica la cantidad de iteraciones.
     /// </summary>
-    public const int DefaultIterCount = 50000;
+    /// <remarks>
+    /// 600000 es la cifra que recomienda OWASP para PBKDF2-HMAC-SHA256, el algoritmo por defecto (Password Storage Cheat
+    /// Sheet). Con HMACSHA512 recomienda 220000 y con HMACSHA1, que sólo es para sistemas antiguos, 1400000.
+    /// </remarks>
+    public const int DefaultIterCount = 600000;
 
     /// <summary>
     /// Valor por defecto que indica la cantidad de btyes de la cabezera.
@@ -107,7 +111,7 @@ public partial class EncryptionSettings
 
     /// <summary>
     /// Obtiene o establece un valor que indica la cantidad de iteraciones.
-    /// <para><strong>Default:</strong> <see cref="DefaultIterCount"/> = 50000.</para>
+    /// <para><strong>Default:</strong> <see cref="DefaultIterCount"/> = 600000.</para>
     /// </summary>
     public int? IterCount
     {

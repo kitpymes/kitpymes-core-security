@@ -134,11 +134,9 @@ public class PasswordService(PasswordSettings settings)
     /// <inheritdoc/>
     public bool Verify(string? plainPassword, string? hashPassword)
     {
-        var errors = Validate(plainPassword);
-
-        var isValid = errors.Count == 0 && VerifyPassword(hashPassword, plainPassword);
-
-        return isValid;
+        // La política de contraseñas sólo se comprueba al crear (Create): si se endurece, las contraseñas guardadas
+        // con la política anterior tienen que seguir entrando.
+        return VerifyPassword(hashPassword, plainPassword);
     }
 
     /// <inheritdoc/>
