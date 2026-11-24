@@ -130,6 +130,11 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # La comprobación del umbral se prueba antes contra informes falsos: tiene que fallar por
+      # debajo del 80 % y sin mutantes, y pasar en el 80 % y por encima.
+      - name: Probar la comprobación del umbral de mutación
+        run: bash .github/scripts/test-check-mutacion.sh
+
       - name: Instalar Stryker.NET
         run: dotnet tool install -g dotnet-stryker --version 5.1.0
 
@@ -138,8 +143,13 @@ jobs:
           for t in $(git ls-files 'Kitpymes.*.Tests/*.Tests.csproj'); do
             src=$(basename "$t" .Tests.csproj)
             [ -f "$src/$src.csproj" ] || continue
-            (cd "$(dirname "$t")" && dotnet stryker --project "$src.csproj" --reporter markdown --reporter json --reporter progress --output "../mutacion/$src") || exit 1
+            (cd "$(dirname "$t")" && dotnet stryker --project "$src.csproj" --reporter markdown --reporter json --reporter progress --break-at 80 --output "../mutacion/$src") || exit 1
           done
+
+      # Además de --break-at, el umbral se comprueba sobre el informe: si Stryker no generara
+      # informe o no contara ningún mutante, el paso falla en vez de pasar en verde.
+      - name: Umbral de mutación (80 %)
+        run: python3 .github/scripts/check-mutacion.py 80 $(find mutacion -name mutation-report.json)
 
       - name: Resumen
         if: always()
