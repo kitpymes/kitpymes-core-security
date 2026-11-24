@@ -43,6 +43,12 @@ public class PasswordService(PasswordSettings settings)
     private const uint MaxIterCount = 10_000_000;
 
     /// <summary>
+    /// Longitud máxima de la sal que se acepta al leer un hash. El coste de la verificación crece con ella;
+    /// la mayor de <see cref="SaltBytesLength"/> es 64.
+    /// </summary>
+    private const uint MaxSaltLength = 1024;
+
+    /// <summary>
     /// Longitud mínima de la cabecera: la marca de formato y tres enteros de 4 bytes.
     /// </summary>
     private const int MinHeaderByteLength = 13;
@@ -332,8 +338,8 @@ public class PasswordService(PasswordSettings settings)
         var iterCountRead = ReadNetworkByteOrder(decoded, 5);
         var saltLengthRead = ReadNetworkByteOrder(decoded, 9);
 
-        // Un algoritmo desconocido, unas iteraciones fuera de rango o una sal vacía son un hash mal formado.
-        if (prfRead > 2 || iterCountRead == 0 || iterCountRead > MaxIterCount || saltLengthRead == 0)
+        // Un algoritmo desconocido, unas iteraciones fuera de rango o una sal vacía o demasiado larga son un hash mal formado.
+        if (prfRead > 2 || iterCountRead == 0 || iterCountRead > MaxIterCount || saltLengthRead == 0 || saltLengthRead > MaxSaltLength)
         {
             return false;
         }
