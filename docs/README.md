@@ -254,9 +254,13 @@ if (passwordService.Verify(password, user.PasswordHash))
 {
     if (passwordService.NeedsRehash(user.PasswordHash))
     {
-        var (hash, _) = passwordService.Create(password);
+        // Create aplica la política actual: si la contraseña antigua no la cumple, no hay hash nuevo y se deja el que había.
+        var (hash, errors) = passwordService.Create(password);
 
-        user.PasswordHash = hash!;
+        if (hash is not null)
+        {
+            user.PasswordHash = hash;
+        }
     }
 }
 ```
