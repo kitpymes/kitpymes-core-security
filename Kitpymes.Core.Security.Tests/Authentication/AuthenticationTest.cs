@@ -294,7 +294,7 @@ namespace Kitypmes.Core.Security.Tests
 
         private static string CreateToken(string privateKey, DateTime notBefore, DateTime expires)
         {
-            var rsa = RSA.Create();
+            using var rsa = RSA.Create();
             rsa.ImportRSAPrivateKey(Convert.FromBase64String(privateKey), out _);
 
             var descriptor = new SecurityTokenDescriptor
@@ -310,7 +310,10 @@ namespace Kitypmes.Core.Security.Tests
         }
 
         private static async Task<bool> IsValidAsync(string token, TokenValidationParameters parameters)
-            => (await new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler().ValidateTokenAsync(token, parameters)).IsValid;
+            => (await ValidateAsync(token, parameters)).IsValid;
+
+        private static Task<TokenValidationResult> ValidateAsync(string token, TokenValidationParameters parameters)
+            => new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler().ValidateTokenAsync(token, parameters);
 
         [TestMethod]
         public async Task JsonWebToken_Validation_Accepts_CurrentToken()
@@ -332,7 +335,10 @@ namespace Kitypmes.Core.Security.Tests
 
             var token = CreateToken(privateKey, DateTime.UtcNow.AddMinutes(10), DateTime.UtcNow.AddMinutes(20));
 
-            Assert.IsFalse(await IsValidAsync(token, parameters));
+            var result = await ValidateAsync(token, parameters);
+
+            Assert.IsFalse(result.IsValid);
+            Assert.IsInstanceOfType<SecurityTokenNotYetValidException>(result.Exception);
         }
 
         [TestMethod]
@@ -343,7 +349,10 @@ namespace Kitypmes.Core.Security.Tests
 
             var token = CreateToken(privateKey, DateTime.UtcNow.AddMinutes(-20), DateTime.UtcNow.AddMinutes(-10));
 
-            Assert.IsFalse(await IsValidAsync(token, parameters));
+            var result = await ValidateAsync(token, parameters);
+
+            Assert.IsFalse(result.IsValid);
+            Assert.IsInstanceOfType<SecurityTokenExpiredException>(result.Exception);
         }
 
         [TestMethod]
