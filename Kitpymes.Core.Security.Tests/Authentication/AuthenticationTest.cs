@@ -925,8 +925,7 @@ namespace Kitypmes.Core.Security.Tests
         [TestMethod]
         public async Task RedirectToAccessDenied_WithUser_Throws_WithUsername()
         {
-            // Shared lee las claims como JSON (ToUserName deserializa el valor): con un nombre en texto plano,
-            // ToDetails lanza JsonException en vez de UnauthorizedAccessException. Ver Pendiente de security.md.
+            // Un nombre con comillas sale tal cual en el mensaje; el de texto plano lo prueba WithPlainTextNameClaim.
             var httpContext = new DefaultHttpContext
             {
                 User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "\"ana-test\"") }, "Test")),
