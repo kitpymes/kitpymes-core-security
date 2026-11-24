@@ -583,6 +583,80 @@ namespace Kitypmes.Core.Security.Tests
             authentication.VerifyNoOtherCalls();
         }
 
+        [TestMethod]
+        public async Task CookiesService_TwoParallelRequests_DoNotShare_AuthenticationProperties()
+        {
+            // El servicio es un singleton. Hasta la 2.5.0 guardaba las AuthenticationProperties del último SignInAsync,
+            // de cualquier petición, y el SignOutAsync de otra petición las usaba: aquí, Ana cerraba sesión con las de Beto.
+            var accessor = new HttpContextAccessor();
+            var authentication = new Mock<IAuthenticationService>();
+            var signOuts = new System.Collections.Concurrent.ConcurrentDictionary<HttpContext, AuthenticationProperties?>();
+
+            authentication
+                .Setup(x => x.SignInAsync(It.IsAny<HttpContext>(), It.IsAny<string>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<AuthenticationProperties>()))
+                .Returns(Task.CompletedTask);
+            authentication
+                .Setup(x => x.SignOutAsync(It.IsAny<HttpContext>(), It.IsAny<string>(), It.IsAny<AuthenticationProperties>()))
+                .Callback<HttpContext, string, AuthenticationProperties>((context, _, properties) => signOuts[context] = properties)
+                .Returns(Task.CompletedTask);
+
+            var service = new CookiesService(new CookiesSettings(), authentication.Object, accessor);
+
+            var contextAna = new DefaultHttpContext();
+            var contextBeto = new DefaultHttpContext();
+            var anaSignedIn = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var betoSignedIn = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            async Task RequestAna()
+            {
+                accessor.HttpContext = contextAna;
+                await service.SignInAsync(new[] { new Claim(ClaimTypes.Name, "ana") }, x => x.RedirectUri = "/ana");
+                anaSignedIn.SetResult();
+                await betoSignedIn.Task;
+                await service.SignOutAsync();
+            }
+
+            async Task RequestBeto()
+            {
+                await anaSignedIn.Task;
+                accessor.HttpContext = contextBeto;
+                await service.SignInAsync(new[] { new Claim(ClaimTypes.Name, "beto") }, x => x.RedirectUri = "/beto");
+                betoSignedIn.SetResult();
+                await service.SignOutAsync();
+            }
+
+            await Task.WhenAll(Task.Run(RequestAna), Task.Run(RequestBeto));
+
+            Assert.AreEqual(2, signOuts.Count);
+            Assert.AreNotEqual("/beto", signOuts[contextAna]?.RedirectUri);
+            Assert.AreNotEqual("/ana", signOuts[contextBeto]?.RedirectUri);
+        }
+
+        [TestMethod]
+        public async Task CookiesService_Uses_AuthenticationService_Of_The_Request()
+        {
+            // IAuthenticationService es scoped: hasta la 2.5.0 se usaba siempre el del registro, sacado de un contenedor
+            // temporal y compartido por todas las peticiones. Ahora se usa el de la petición.
+            var requestAuthentication = new Mock<IAuthenticationService>();
+            var registeredAuthentication = new Mock<IAuthenticationService>();
+
+            var requestServices = new ServiceCollection();
+            requestServices.AddSingleton(requestAuthentication.Object);
+
+            var httpContext = new DefaultHttpContext { RequestServices = requestServices.BuildServiceProvider() };
+            var accessor = new Mock<IHttpContextAccessor>();
+            accessor.SetupGet(x => x.HttpContext).Returns(httpContext);
+
+            var service = new CookiesService(new CookiesSettings(), registeredAuthentication.Object, accessor.Object);
+
+            await service.SignInAsync(new[] { new Claim(ClaimTypes.Name, "ana") });
+            await service.SignOutAsync();
+
+            requestAuthentication.Verify(x => x.SignInAsync(httpContext, CookieAuthenticationDefaults.AuthenticationScheme, It.IsAny<ClaimsPrincipal>(), It.IsAny<AuthenticationProperties>()), Times.Once);
+            requestAuthentication.Verify(x => x.SignOutAsync(httpContext, CookieAuthenticationDefaults.AuthenticationScheme, It.IsAny<AuthenticationProperties>()), Times.Once);
+            registeredAuthentication.VerifyNoOtherCalls();
+        }
+
         #endregion Cookies
 
         #region CustomCookieAuthenticationEvents
