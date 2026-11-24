@@ -1,3 +1,14 @@
+# v.2.4.0
+Versión menor: Verify deja de aplicar la política de contraseñas y sube el número de iteraciones por defecto, sin romper la API pública.
+CAMBIO DE COMPORTAMIENTO: Verify ya no aplica la política de contraseñas (longitud mínima, dígito, mayúscula, caracteres especiales, caracteres únicos): sólo comprueba la contraseña contra el hash. La política se comprueba únicamente en Create, al crear o cambiar la contraseña. Hasta la 2.3.0, endurecer la política hacía que las contraseñas guardadas que no la cumplían dejaran de verificar; ahora siguen entrando, y si se quiere obligar a cambiarlas hay que hacerlo en la aplicación (por ejemplo, con Validate después de un Verify correcto).
+- Una contraseña nula o vacía sigue dando false.
+CAMBIO DE COMPORTAMIENTO: EncryptionSettings.DefaultIterCount pasa de 50000 a 600000, la cifra que recomienda OWASP para PBKDF2-HMAC-SHA256, el algoritmo por defecto (OWASP Password Storage Cheat Sheet, https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html, consultada el 24/11/2026). Para los otros algoritmos, OWASP recomienda 220000 con HMACSHA512 y 1400000 con HMACSHA1, que sólo es para sistemas antiguos; el valor por defecto no cambia según el algoritmo.
+- Afecta a quien no configura IterCount (o lo deja a null). Quien lo configura sigue con su valor.
+- Los hashes creados con 50000 se siguen verificando (Verify lee las iteraciones del hash) y NeedsRehash da true para ellos: después de un Verify correcto, guardar el hash nuevo de Create. Sin NeedsRehash en el login, los hashes antiguos se quedan con 50000.
+- Cada Create y cada Verify de un hash nuevo calcula 12 veces más iteraciones, así que tarda unas 12 veces más. No está medido en .NET: comprobarlo en la máquina donde se despliegue.
+- DefaultIterCount es una constante: quien la use en su propio código y no recompile sigue viendo 50000.
+- El paquete se compara al empaquetar con la API pública de la 2.3.0 (validación de paquete).
+
 # v.2.3.0
 Versión menor: Verify cambia de comportamiento y se añade NeedsRehash, sin romper la API pública.
 CAMBIO DE COMPORTAMIENTO: Verify lee el algoritmo (HMACSHA1, HMACSHA256 o HMACSHA512), las iteraciones y la longitud de la sal de la cabecera del propio hash, y no de la configuración. Un hash guardado se sigue verificando aunque se cambien KeyDerivationAlgorithm, IterCount o SaltLength. Hasta la 2.2.0, cambiar cualquiera de los tres hacía que todos los hashes guardados dieran false. La marca de formato (FormatMarker) y la longitud de la cabecera (HeaderByteLength) sí tienen que seguir siendo las mismas.
@@ -6,7 +17,7 @@ CAMBIO DE COMPORTAMIENTO: Verify lee el algoritmo (HMACSHA1, HMACSHA256 o HMACSH
 Nuevo: NeedsRehash(hash) dice si un hash se creó con un algoritmo, unas iteraciones o una longitud de sal distintos de los de la configuración actual (también da true si el hash es nulo o está mal formado). Para subir las iteraciones sin invalidar nada: cambiar la configuración y, después de cada Verify correcto, si NeedsRehash da true, guardar el hash nuevo de Create con la contraseña que acaba de entrar. En IPasswordService es un miembro con implementación por defecto que devuelve false, así que una implementación propia sigue compilando.
 - NeedsRehash compara con "distinto", no con "menor": bajar las iteraciones también pide regenerar. Si durante un despliegue dos instancias tienen configuraciones distintas, cada una regenerará los hashes de la otra en cada inicio de sesión hasta que coincidan.
 - Create lanza si el servicio está desactivado (Enabled = false); Verify y NeedsRehash no lo comprueban. Con el servicio desactivado, no llamar a Create para regenerar.
-- Verify sigue aplicando la política actual de contraseñas (longitud mínima, etc.) antes de comprobar el hash: si se endurece, las contraseñas antiguas que no la cumplan dejan de verificar.
+- Verify sigue aplicando la política actual de contraseñas (longitud mínima, etc.) antes de comprobar el hash: si se endurece, las contraseñas antiguas que no la cumplan dejan de verificar (cambia en la 2.4.0).
 Obsoleto (KPY0004): EncryptionSettings.AlgorithmName y EncryptionSettings.DefaultAlgorithmName. No hacen nada: el algoritmo lo marca KeyDerivationAlgorithm al crear el hash, y al verificar se lee del hash. Hasta la 2.2.0, Verify exigía que AlgorithmName coincidiera con el algoritmo del hash, y con KeyDerivationAlgorithm 0 o 2 y AlgorithmName por defecto ninguna contraseña verificaba. Se eliminan en la 3.0.0.
 - El paquete se compara al empaquetar con la API pública de la 2.2.0 (validación de paquete).
 
