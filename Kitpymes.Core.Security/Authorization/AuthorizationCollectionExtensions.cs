@@ -70,6 +70,9 @@ public static class AuthorizationCollectionExtensions
                         builder.RequireAuthenticatedUser();
                     }
 
+                    // Sólo se sustituye la política si hay algo que poner: un esquema o RequireAuthenticatedUser.
+                    var replace = builder.AuthenticationSchemes.Count > 0 || settings.DefaultPolicy.RequireAuthenticatedUser == true;
+
                     // Una política sin requisitos no se puede construir: con sólo RequiredSchemes, se parte de la política
                     // por defecto vigente (la de ASP.NET Core, usuario autenticado, o la que ya tuviera la aplicación),
                     // con sus requisitos y esquemas, y se le añaden los esquemas.
@@ -78,7 +81,7 @@ public static class AuthorizationCollectionExtensions
                         builder.Combine(x.DefaultPolicy);
                     }
 
-                    if (builder.AuthenticationSchemes.Count > 0 || settings.DefaultPolicy.RequireAuthenticatedUser == true)
+                    if (replace)
                     {
                         x.DefaultPolicy = builder.Build();
                     }
