@@ -125,6 +125,24 @@ namespace Kitypmes.Core.Security.Tests
             }
         }
 
+        [TestMethod]
+        public async Task RequirementHandlers_WithMalformedUserClaim_Fail()
+        {
+            // Hasta la 2.6.1, una claim de sesión que no es JSON hacía lanzar JsonException en el manejador (un 500)
+            // en vez de denegar.
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ApiSession.UserClaimType, "no-es-json") }, "Test"));
+
+            var roleContext = new AuthorizationHandlerContext(new[] { new RoleRequirement("Admin") }, user, null);
+            await new RoleRequirementHandler().HandleAsync(roleContext);
+
+            var permissionContext = new AuthorizationHandlerContext(new[] { new PermissionRequirement("Users.Read") }, user, null);
+            await new PermissionRequirementHandler().HandleAsync(permissionContext);
+
+            Assert.IsTrue(roleContext.HasFailed);
+            Assert.IsTrue(permissionContext.HasFailed);
+            StringAssert.Contains(roleContext.FailureReasons.Single().Message, "Necesita ingresar al sistema");
+        }
+
         #endregion PermissionRequirement
 
         #region LoadAuthorization

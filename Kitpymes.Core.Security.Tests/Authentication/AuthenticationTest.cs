@@ -954,6 +954,37 @@ namespace Kitypmes.Core.Security.Tests
             Assert.IsFalse(exception.Message.Contains("\"Username\"", StringComparison.Ordinal));
         }
 
+        [TestMethod]
+        public async Task RedirectToAccessDenied_WithPlainTextNameClaim_Throws_Unauthorized()
+        {
+            // Hasta la 2.6.1, con el nombre en texto plano (como lo pone ASP.NET Core) lanzaba JsonException:
+            // HttpContext.ToDetails de Shared deserializa los valores de las claims como JSON.
+            var httpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "ana-texto") }, "Test")),
+            };
+            httpContext.Request.Path = "/privado";
+
+            var events = new CustomCookieAuthenticationEvents(new HttpContextAccessor { HttpContext = httpContext });
+
+            var exception = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => events.RedirectToAccessDenied(CreateRedirectContext(httpContext)));
+
+            StringAssert.Contains(exception.Message, "ana-texto");
+            StringAssert.Contains(exception.Message, "/privado");
+        }
+
+        [TestMethod]
+        public async Task RedirectToAccessDenied_WithoutUser_DoesNotLeak_ServerUserName()
+        {
+            // Hasta la 2.6.1, sin usuario, el mensaje llevaba Environment.UserName del servidor.
+            var httpContext = new DefaultHttpContext();
+            var events = new CustomCookieAuthenticationEvents(new HttpContextAccessor { HttpContext = httpContext });
+
+            var exception = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => events.RedirectToAccessDenied(CreateRedirectContext(httpContext)));
+
+            Assert.IsFalse(exception.Message.Contains($"\"{Environment.UserName}\"", StringComparison.Ordinal), exception.Message);
+        }
+
         #endregion CustomCookieAuthenticationEvents
     }
 }
