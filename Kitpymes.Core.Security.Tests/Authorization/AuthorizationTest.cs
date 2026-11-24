@@ -224,7 +224,6 @@ namespace Kitypmes.Core.Security.Tests
 
             services.AddSingleton<IConfiguration>(configuration);
 
-            // Con RequiredSchemes sola, la política quedaría sin requisitos (ver Pendiente de security.md).
             services.LoadAuthorization(new AuthorizationSettings
             {
                 Enabled = true,
@@ -263,6 +262,61 @@ namespace Kitypmes.Core.Security.Tests
             var policy = GetOptions(services).DefaultPolicy;
 
             Assert.AreEqual(0, policy.AuthenticationSchemes.Count);
+        }
+
+        private static IServiceCollection ServicesWithJsonWebTokenScheme(string jsonWebTokenEnabled = "true")
+        {
+            var services = new ServiceCollection();
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["SecuritySettings:AuthenticationSettings:Enabled"] = "true",
+                    ["SecuritySettings:AuthenticationSettings:JsonWebTokenSettings:Enabled"] = jsonWebTokenEnabled,
+                    ["SecuritySettings:AuthenticationSettings:JsonWebTokenSettings:AuthenticateScheme"] = "EsquemaTest",
+                })
+                .Build();
+
+            services.AddSingleton<IConfiguration>(configuration);
+
+            return services;
+        }
+
+        [TestMethod]
+        public void LoadAuthorization_Passing_OnlyRequiredSchemes_Requires_AuthenticatedUser_With_Scheme()
+        {
+            // Hasta la 2.6.0, con RequiredSchemes sola la política por defecto se quedaba sin requisitos y ASP.NET Core
+            // lanzaba al resolver las opciones: la aplicación fallaba en la primera petición con [Authorize].
+            var services = ServicesWithJsonWebTokenScheme();
+
+            services.LoadAuthorization(new AuthorizationSettings
+            {
+                Enabled = true,
+                DefaultPolicy = new DefaultPolicySettings { RequiredSchemes = true },
+            });
+
+            var policy = GetOptions(services).DefaultPolicy;
+
+            CollectionAssert.AreEqual(new[] { "EsquemaTest" }, policy.AuthenticationSchemes.ToArray());
+            Assert.IsInstanceOfType<Microsoft.AspNetCore.Authorization.Infrastructure.DenyAnonymousAuthorizationRequirement>(policy.Requirements.Single());
+        }
+
+        [TestMethod]
+        public void LoadAuthorization_Passing_OnlyRequiredSchemes_WithoutJsonWebToken_Keeps_FrameworkDefaultPolicy()
+        {
+            // Sin esquema de JWT no hay nada que añadir: se queda la política por defecto de ASP.NET Core.
+            var services = ServicesWithJsonWebTokenScheme(jsonWebTokenEnabled: "false");
+
+            services.LoadAuthorization(new AuthorizationSettings
+            {
+                Enabled = true,
+                DefaultPolicy = new DefaultPolicySettings { RequiredSchemes = true },
+            });
+
+            var policy = GetOptions(services).DefaultPolicy;
+
+            Assert.AreEqual(0, policy.AuthenticationSchemes.Count);
+            Assert.IsInstanceOfType<Microsoft.AspNetCore.Authorization.Infrastructure.DenyAnonymousAuthorizationRequirement>(policy.Requirements.Single());
         }
 
         [TestMethod]
