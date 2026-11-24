@@ -103,17 +103,13 @@ public static class CookiesServiceCollectionExtensions
                     // options.EventsType = typeof(CustomCookieAuthenticationEvents);
                 });
 
-            var authenticationService = services.ToService<IAuthenticationService>();
+            services.AddHttpContextAccessor();
 
-            if (!services.ToExists<IHttpContextAccessor>())
-            {
-                services.AddHttpContextAccessor();
-            }
-
-            var httpContextAccessor = services.ToService<IHttpContextAccessor>();
-
-            // services.AddScoped<CustomCookieAuthenticationEvents>();
-            services.TryAddSingleton<ICookiesService>(new CookiesService(config, authenticationService!, httpContextAccessor!));
+            // Por petición: IAuthenticationService es scoped y se resuelve en el ámbito de cada petición.
+            services.TryAddScoped<ICookiesService>(provider => new CookiesService(
+                config,
+                provider.GetRequiredService<IAuthenticationService>(),
+                provider.GetRequiredService<IHttpContextAccessor>()));
         }
 
         return services;
