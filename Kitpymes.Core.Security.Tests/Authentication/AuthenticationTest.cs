@@ -276,6 +276,88 @@ namespace Kitypmes.Core.Security.Tests
             Assert.AreEqual("Admin", service.Get(token).Claims["rol"]);
         }
 
+        private static TokenValidationParameters GetValidationParameters(string privateKey, string publicKey, Action<JsonWebTokenOptions>? extra = null)
+        {
+            var services = new ServiceCollection();
+
+            services.LoadSecurity(sec => sec.WithAuthentication(auth => auth.WithJsonWebToken(options =>
+            {
+                options.WithEnabled().WithPrivateKey(privateKey).WithPublicKey(publicKey);
+                extra?.Invoke(options);
+            })));
+
+            return services.BuildServiceProvider()
+                .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+                .Get(JwtBearerDefaults.AuthenticationScheme)
+                .TokenValidationParameters;
+        }
+
+        private static string CreateToken(string privateKey, DateTime notBefore, DateTime expires)
+        {
+            var rsa = RSA.Create();
+            rsa.ImportRSAPrivateKey(Convert.FromBase64String(privateKey), out _);
+
+            var descriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[] { new Claim("sub", "ana") }),
+                NotBefore = notBefore,
+                Expires = expires,
+                IssuedAt = notBefore,
+                SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256),
+            };
+
+            return new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler().CreateToken(descriptor);
+        }
+
+        private static async Task<bool> IsValidAsync(string token, TokenValidationParameters parameters)
+            => (await new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler().ValidateTokenAsync(token, parameters)).IsValid;
+
+        [TestMethod]
+        public async Task JsonWebToken_Validation_Accepts_CurrentToken()
+        {
+            var (privateKey, publicKey) = CreateKeys();
+            var parameters = GetValidationParameters(privateKey, publicKey);
+
+            var token = CreateToken(privateKey, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(10));
+
+            Assert.IsTrue(await IsValidAsync(token, parameters));
+        }
+
+        [TestMethod]
+        public async Task JsonWebToken_Validation_Rejects_NotYetValidToken()
+        {
+            // nbf en el futuro: el token todavía no vale.
+            var (privateKey, publicKey) = CreateKeys();
+            var parameters = GetValidationParameters(privateKey, publicKey);
+
+            var token = CreateToken(privateKey, DateTime.UtcNow.AddMinutes(10), DateTime.UtcNow.AddMinutes(20));
+
+            Assert.IsFalse(await IsValidAsync(token, parameters));
+        }
+
+        [TestMethod]
+        public async Task JsonWebToken_Validation_Rejects_ExpiredToken()
+        {
+            var (privateKey, publicKey) = CreateKeys();
+            var parameters = GetValidationParameters(privateKey, publicKey);
+
+            var token = CreateToken(privateKey, DateTime.UtcNow.AddMinutes(-20), DateTime.UtcNow.AddMinutes(-10));
+
+            Assert.IsFalse(await IsValidAsync(token, parameters));
+        }
+
+        [TestMethod]
+        public async Task JsonWebToken_Validation_WithValidateLifetimeFalse_Accepts_ExpiredToken()
+        {
+            // WithValidateLifetime(false) desactiva la comprobación de las fechas.
+            var (privateKey, publicKey) = CreateKeys();
+            var parameters = GetValidationParameters(privateKey, publicKey, x => x.WithValidateLifetime(false));
+
+            var token = CreateToken(privateKey, DateTime.UtcNow.AddMinutes(-20), DateTime.UtcNow.AddMinutes(-10));
+
+            Assert.IsTrue(await IsValidAsync(token, parameters));
+        }
+
         #endregion JsonWebToken
 
         #region LoadAuthentication
