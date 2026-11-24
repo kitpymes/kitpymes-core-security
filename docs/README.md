@@ -149,6 +149,7 @@ public interface IJsonWebTokenService
 {
     GetJsonWebTokenResult Get(string? token);
 
+    // Ojo: esta sobrecarga ignora hoy los headers (fallo conocido); para pasar headers, usar la de IEnumerable<Claim>.
     CreateJsonWebTokenResult Create(Claim claim, IDictionary<string, IEnumerable<string>>? headers = null);
 
     CreateJsonWebTokenResult Create(IEnumerable<Claim> claims, IDictionary<string, IEnumerable<string>>? headers = null);

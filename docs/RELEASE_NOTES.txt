@@ -4,7 +4,7 @@ CAMBIO DE COMPORTAMIENTO: ICookiesService se registra por petición (scoped), no
 - Quien inyecte ICookiesService en un singleton (por ejemplo, un middleware por convención en su constructor o un BackgroundService): con la validación de ámbitos (Development) falla al arrancar, y sin ella usaría el ámbito raíz. Inyectarlo en el método Invoke/InvokeAsync del middleware o resolverlo dentro de un ámbito.
 - services.GetAuthCookies() sigue funcionando: resuelve desde un contenedor nuevo, sin ámbito de petición.
 CAMBIO DE COMPORTAMIENTO: la validación del JWT tolera por defecto 60 segundos de desfase de reloj (ClockSkew). Hasta la 2.5.2 no había margen y unos segundos de diferencia entre el servidor que emite y el que valida daban fallos de inicio de sesión al azar. Ahora un token se acepta hasta 60 segundos antes de su nbf y hasta 60 segundos después de su exp.
-- Nuevo: JsonWebTokenSettings.ClockSkewSeconds (por defecto 60; un valor negativo se ignora) y JsonWebTokenOptions.WithClockSkew(segundos), que lanza con un negativo. Con 0 no se tolera ninguno, como en la 2.5.2.
+- Nuevo: JsonWebTokenSettings.ClockSkewSeconds (por defecto 60; un valor negativo se ignora) y JsonWebTokenOptions.WithClockSkew(segundos), que lanza SharedException con un negativo. Desde appsettings, un negativo se ignora y se queda en 60, como los demás ajustes que no admiten un valor. Con 0 no se tolera ninguno, como en la 2.5.2.
 - El paquete se compara al empaquetar con la API pública de la 2.5.2 (validación de paquete).
 
 # v.2.5.2
