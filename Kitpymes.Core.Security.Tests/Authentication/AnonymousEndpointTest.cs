@@ -7,21 +7,60 @@ namespace Kitpymes.Core.Security.Tests.Authentication
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.TestHost;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.IdentityModel.Tokens;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using System;
     using System.Net;
     using System.Net.Http;
+    using System.Security.Claims;
     using System.Security.Cryptography;
     using System.Threading.Tasks;
 
     [TestClass]
     public class AnonymousEndpointTest
     {
-        private static async Task<WebApplication> StartAppAsync()
+        private static readonly string PrivateKey;
+
+        private static readonly string PublicKey;
+
+        static AnonymousEndpointTest()
         {
             using var rsa = RSA.Create(2048);
-            var privateKey = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
-            var publicKey = Convert.ToBase64String(rsa.ExportRSAPublicKey());
+            PrivateKey = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+            PublicKey = Convert.ToBase64String(rsa.ExportRSAPublicKey());
+        }
+
+        private static string CreateToken(DateTime notBefore, DateTime expires, string? privateKey = null)
+        {
+            using var rsa = RSA.Create();
+            rsa.ImportRSAPrivateKey(Convert.FromBase64String(privateKey ?? PrivateKey), out _);
+
+            var descriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[] { new Claim("sub", "ana") }),
+                NotBefore = notBefore,
+                Expires = expires,
+                IssuedAt = notBefore,
+                SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256),
+            };
+
+            return new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler().CreateToken(descriptor);
+        }
+
+        private static string CreateExpiredToken()
+            => CreateToken(DateTime.UtcNow.AddMinutes(-20), DateTime.UtcNow.AddMinutes(-10));
+
+        private static string CreateOtherKeyToken()
+        {
+            using var other = RSA.Create(2048);
+
+            return CreateToken(DateTime.UtcNow, DateTime.UtcNow.AddMinutes(10), Convert.ToBase64String(other.ExportRSAPrivateKey()));
+        }
+
+        private static async Task<WebApplication> StartAppAsync()
+        {
+            var privateKey = PrivateKey;
+            var publicKey = PublicKey;
 
             var builder = WebApplication.CreateBuilder();
             builder.WebHost.UseTestServer();
@@ -73,6 +112,51 @@ namespace Kitpymes.Core.Security.Tests.Authentication
             using var response = await GetAsync(app, "/publico", "no-es-un-token");
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task PublicEndpoint_WithExpiredOrOtherKeyToken_Returns_Ok()
+        {
+            await using var app = await StartAppAsync();
+
+            using var expired = await GetAsync(app, "/publico", CreateExpiredToken());
+            using var otherKey = await GetAsync(app, "/publico", CreateOtherKeyToken());
+
+            Assert.AreEqual(HttpStatusCode.OK, expired.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, otherKey.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task PrivateEndpoint_WithValidToken_Returns_Ok()
+        {
+            await using var app = await StartAppAsync();
+
+            using var response = await GetAsync(app, "/privado", CreateToken(DateTime.UtcNow, DateTime.UtcNow.AddMinutes(10)));
+
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task PrivateEndpoint_WithExpiredToken_Throws_WithExpires()
+        {
+            // El mensaje es el de ToDetails(AuthenticationFailedContext), como en la 2.6.2: el de IdentityModel y la caducidad.
+            await using var app = await StartAppAsync();
+
+            var exception = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => GetAsync(app, "/privado", CreateExpiredToken()));
+
+            StringAssert.StartsWith(exception.Message, "IDX10223");
+            StringAssert.Contains(exception.Message, " | Expires: ");
+        }
+
+        [TestMethod]
+        public async Task PrivateEndpoint_WithOtherKeyToken_Throws_WithSignatureError()
+        {
+            await using var app = await StartAppAsync();
+
+            var exception = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => GetAsync(app, "/privado", CreateOtherKeyToken()));
+
+            StringAssert.StartsWith(exception.Message, "IDX10");
+            Assert.IsFalse(exception.Message.Contains("Expires:", StringComparison.Ordinal), exception.Message);
         }
 
         [TestMethod]

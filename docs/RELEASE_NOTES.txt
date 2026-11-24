@@ -1,8 +1,14 @@
 # v.2.6.3
 Parche: una ruta pública ya no falla cuando la petición trae un JWT inválido. Sin cambios en la API pública.
-Corrección de un fallo: el evento OnAuthenticationFailed de JwtBearer lanzaba UnauthorizedAccessException. La autenticación corre en todas las peticiones, así que un token mal formado, caducado o con mala firma en la cabecera Authorization tumbaba también las rutas [AllowAnonymous], que no piden usuario. Comprobado con un servidor de pruebas: con la 2.6.2, GET a una ruta pública con "Bearer no-es-un-token" lanzaba la excepción. Ahora OnAuthenticationFailed guarda el error y la petición sigue sin usuario; la ruta pública responde.
-- En las rutas que piden usuario no cambia nada: el desafío (OnChallenge) lanza UnauthorizedAccessException con el mismo mensaje que antes (el error del token, o el mensaje por defecto si no hay token).
+Corrección de un fallo: el evento OnAuthenticationFailed de JwtBearer lanzaba UnauthorizedAccessException. La autenticación corre en todas las peticiones, así que un token mal formado, caducado o firmado con otra clave en la cabecera Authorization tumbaba también las rutas [AllowAnonymous], que no piden usuario (probado con los tres). Comprobado con un servidor de pruebas: con la 2.6.2, GET a una ruta pública con "Bearer no-es-un-token" lanzaba la excepción. Ahora OnAuthenticationFailed guarda el error y la petición sigue sin usuario; la ruta pública responde.
+- En las rutas que piden usuario, con el esquema por defecto: el desafío (OnChallenge) lanza UnauthorizedAccessException con el mismo mensaje que antes (el error del token, o el mensaje por defecto si no hay token). Probado con un token mal formado, uno caducado y uno firmado con otra clave.
+- Un fallo de JwtBearer fuera de la validación del token (configuración, resolución de claves) tampoco lanza al autenticar: cuenta como token inválido. Antes lanzaba UnauthorizedAccessException. (Sin test.)
+CAMBIO DE COMPORTAMIENTO, en los mismos casos de token inválido (es el mismo fallo, que autenticar lanzaba en vez de fallar):
 - Quien capturara la excepción de un token inválido en una ruta pública: ya no salta.
+- HttpContext.AuthenticateAsync("Bearer") con un token inválido devuelve un fallo (Succeeded = false) en vez de lanzar.
+- Con una política de varios esquemas (por ejemplo, Bearer y cookies), un token inválido ya no impide entrar con la cookie; si ningún esquema autentica, se desafía como siempre.
+- Los middlewares entre UseAuthentication y UseAuthorization se ejecutan también con un token inválido; antes la petición se cortaba antes de llegar a ellos.
+- Si se configura con WithScheme un esquema de desafío distinto del JWT, responde ese esquema y el error del token no sale en ningún mensaje.
 - El paquete se compara al empaquetar con la API pública de la 2.6.2 (validación de paquete).
 
 # v.2.6.2

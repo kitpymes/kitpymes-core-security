@@ -248,11 +248,13 @@ namespace Kitypmes.Core.Security.Tests
             Assert.AreEqual(DefaultTokenError, challenge.Message);
 
             var httpContext = new DefaultHttpContext();
-            var failedContext = new AuthenticationFailedContext(httpContext, new AuthenticationScheme("Bearer", null, typeof(JwtBearerHandler)), new JwtBearerOptions()) { Exception = new InvalidOperationException("otro") };
+            var failure = new InvalidOperationException("otro");
+            var failedContext = new AuthenticationFailedContext(httpContext, new AuthenticationScheme("Bearer", null, typeof(JwtBearerHandler)), new JwtBearerOptions()) { Exception = failure };
 
             var failed = events.OnAuthenticationFailed(failedContext);
             Assert.IsTrue(failed.IsCompletedSuccessfully);
-            Assert.IsNull(failedContext.Result);
+            Assert.IsNotNull(failedContext.Result);
+            Assert.AreSame(failure, failedContext.Result.Failure);
 
             var challengeContext = new JwtBearerChallengeContext(httpContext, new AuthenticationScheme("Bearer", null, typeof(JwtBearerHandler)), new JwtBearerOptions(), new AuthenticationProperties());
             var afterFailure = await Assert.ThrowsExactlyAsync<UnauthorizedAccessException>(() => events.OnChallenge(challengeContext));

@@ -138,6 +138,10 @@ public static class JsonWebTokenServiceCollectionExtensions
                         {
                             context.HttpContext.Items[AuthenticationFailedDetailsKey] = context.ToDetails();
 
+                            // Sin Fail, JwtBearer relanza la excepción original cuando el fallo viene de su catch general
+                            // (configuración, resolución de claves) en vez de devolver un fallo de autenticación.
+                            context.Fail(context.Exception);
+
                             return Task.CompletedTask;
                         },
                     };
