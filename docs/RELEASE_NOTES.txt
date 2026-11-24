@@ -1,3 +1,15 @@
+# v.2.5.0
+Versión menor: CreateRandom cambia cómo genera las contraseñas y RequiredMinLength ignora los valores menores que 1, sin romper la API pública.
+CAMBIO DE COMPORTAMIENTO: CreateRandom.
+- Los caracteres se barajan. Hasta la 2.4.1 los obligatorios salían siempre al principio y en el mismo orden (dígito, especial, minúscula, mayúscula), así que su posición se podía adivinar.
+- El relleno usa todos los dígitos y todas las letras, mayúsculas y minúsculas, y los caracteres especiales sólo si RequireEspecialChars está activo. Hasta la 2.4.1 se dejaban fuera la I, la x, la y y la z (y la X, la Y y la Z), y no se rellenaba con especiales.
+- RequiredUniqueChars ya no añade un carácter propio (uno de xyzXYZ): sólo exige que no se repita ninguno. La contraseña mide lo que piden los obligatorios o RequiredMinLength, lo que sea mayor.
+- Con RequiredUniqueChars caben hasta 62 caracteres sin especiales y 73 con ellos (antes, unos 56). Si RequiredMinLength es mayor, no se puede crear y CreateRandom devuelve null, como dice su documentación.
+CAMBIO DE COMPORTAMIENTO: PasswordSettings.RequiredMinLength ignora un valor menor que 1 (se queda el anterior, por defecto 6), como ya hacía WithRequiredMinLength, que lanza. Hasta la 2.4.1, un 0 o un negativo desde appsettings se aceptaba sin comprobar.
+- La documentación de RequiredMinLength decía que el valor por defecto era 3; es 6.
+- README: sección Password al día (NeedsRehash, Verify y los valores por defecto).
+- El paquete se compara al empaquetar con la API pública de la 2.4.1 (validación de paquete).
+
 # v.2.4.1
 Parche: corrige un fallo de Create, sin cambiar la API pública.
 Corrección de un fallo: Create aceptaba una configuración con más de 10.000.000 iteraciones (IterCount) o con una sal de más de 1024 bytes (SaltLength), aunque desde la 2.3.0 Verify rechaza esos hashes. El hash creado no verificaba nunca y NeedsRehash pedía regenerarlo en cada inicio de sesión. Ahora Create lanza una excepción (SharedException, como cuando el servicio está desactivado) con cualquiera de los dos por encima del máximo, antes de comprobar la contraseña: también cuando la contraseña no cumple la política, que antes devolvía sólo los errores.
