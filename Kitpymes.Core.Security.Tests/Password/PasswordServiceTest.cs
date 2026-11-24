@@ -675,6 +675,32 @@ namespace Kitypmes.Core.Security.Tests
         }
 
         [TestMethod]
+        [DataRow("Password")]
+        [DataRow("a")]
+        public void Create_Passing_IterCountAboveLimit_Throws(string plainPassword)
+        {
+            // Hasta la 2.4.0, Create aceptaba más de 10.000.000 iteraciones: el hash no verificaba nunca
+            // y NeedsRehash pedía regenerarlo en cada inicio de sesión. Se comprueba antes que la política.
+            var service = CreateService(1, 10_000_001);
+
+            var exception = Assert.Throws<Exception>(() => service.Create(plainPassword));
+
+            StringAssert.Contains(exception.Message, "IterCount");
+            StringAssert.Contains(exception.Message, "10000000");
+        }
+
+        [TestMethod]
+        public void Create_Passing_IterCountAtLimit_DoesNotThrow()
+        {
+            // En el límite se acepta. Con una contraseña que no cumple la política no se calcula PBKDF2,
+            // así que el test no tarda.
+            var (hashPassword, errors) = CreateService(1, 10_000_000).Create("a");
+
+            Assert.IsNull(hashPassword);
+            Assert.AreNotEqual(0, errors.Count);
+        }
+
+        [TestMethod]
         public void DefaultIterCount_Is_OwaspRecommendationForHmacSha256()
         {
             // OWASP, Password Storage Cheat Sheet: PBKDF2-HMAC-SHA256, 600000 iteraciones.
