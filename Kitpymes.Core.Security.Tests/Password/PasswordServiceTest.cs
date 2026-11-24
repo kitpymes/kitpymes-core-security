@@ -293,7 +293,7 @@ namespace Kitypmes.Core.Security.Tests
         [DataRow(-1)]
         public void Verify_Passing_TruncatedOrExtendedHash_Returns_False(int length)
         {
-            // Hash cortado (sólo la marca, sólo la cabecera, sin parte de la clave) o con un byte de más.
+            // Hash cortado (sólo la marca, sólo la cabecera, cabecera y sal sin la clave) o con un byte de más.
             var service = CreateDefaultService();
 
             var decoded = CreateDecodedHash(service);
