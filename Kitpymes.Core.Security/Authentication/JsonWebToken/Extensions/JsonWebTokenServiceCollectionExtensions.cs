@@ -34,6 +34,9 @@ using Microsoft.IdentityModel.Tokens;
 /// </remarks>
 public static class JsonWebTokenServiceCollectionExtensions
 {
+    // Clave de HttpContext.Items donde OnAuthenticationFailed deja el error del token para OnChallenge.
+    private static readonly object AuthenticationFailedDetailsKey = new();
+
     /// <summary>
     /// Obtiene el servicio de autenticación por token.
     /// </summary>
@@ -122,10 +125,21 @@ public static class JsonWebTokenServiceCollectionExtensions
                     };
 
                     // Los eventos que no se nombran se quedan con el comportamiento por defecto (no hacen nada).
+                    // Un token inválido no lanza al autenticar: la autenticación corre en todas las peticiones y tumbaba
+                    // también las rutas públicas ([AllowAnonymous]). Se guarda su error y se lanza en el desafío, que sólo
+                    // ocurre en las rutas que piden usuario, con el mismo mensaje que antes.
                     options.Events = new JwtBearerEvents
                     {
-                        OnChallenge = context => Task.FromException(new UnauthorizedAccessException(context.ToDetails())),
-                        OnAuthenticationFailed = context => Task.FromException(new UnauthorizedAccessException(context.ToDetails())),
+                        OnChallenge = context => Task.FromException(new UnauthorizedAccessException(
+                            context.HttpContext.Items.TryGetValue(AuthenticationFailedDetailsKey, out var details) && details is string message
+                                ? message
+                                : context.ToDetails())),
+                        OnAuthenticationFailed = context =>
+                        {
+                            context.HttpContext.Items[AuthenticationFailedDetailsKey] = context.ToDetails();
+
+                            return Task.CompletedTask;
+                        },
                     };
                 });
 
