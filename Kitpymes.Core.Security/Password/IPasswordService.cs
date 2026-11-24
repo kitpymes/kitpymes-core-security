@@ -42,8 +42,24 @@ public interface IPasswordService
     /// </summary>
     /// <param name="plainPassword">Contraseña de cadena.</param>
     /// <param name="hashPassword">Contraseña cifrada.</param>
-    /// <returns>true si la contraseña corresponde al hash; false si no corresponde, si alguno de los dos es nulo o vacío, o si el hash está mal formado o es de otro algoritmo. No lanza excepciones por el contenido de los argumentos.</returns>
+    /// <remarks>
+    /// El algoritmo, las iteraciones y la longitud de la sal se leen del propio hash, así que un hash creado con otra
+    /// configuración se sigue verificando. La marca de formato y la longitud de la cabecera sí tienen que ser las mismas.
+    /// </remarks>
+    /// <returns>true si la contraseña corresponde al hash; false si no corresponde, si alguno de los dos es nulo o vacío, o si el hash está mal formado. No lanza excepciones por el contenido de los argumentos.</returns>
     bool Verify(string? plainPassword, string? hashPassword);
+
+    /// <summary>
+    /// Indica si un hash se creó con parámetros distintos de los de la configuración actual (algoritmo, iteraciones
+    /// o longitud de la sal) y conviene regenerarlo con <c>Create</c>.
+    /// </summary>
+    /// <remarks>
+    /// Se llama después de un <c>Verify</c> correcto, que es cuando se tiene la contraseña en claro para regenerarlo.
+    /// Una implementación propia que no lo sobrescriba devuelve false: nunca pide regenerar.
+    /// </remarks>
+    /// <param name="hashPassword">Contraseña cifrada.</param>
+    /// <returns>true si hay que regenerar el hash, también si es nulo, vacío o está mal formado; false si ya usa la configuración actual.</returns>
+    bool NeedsRehash(string? hashPassword) => false;
 
     /// <summary>
     /// Valida una contraseña.

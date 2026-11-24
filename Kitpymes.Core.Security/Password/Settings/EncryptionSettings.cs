@@ -7,7 +7,6 @@
 
 namespace Kitpymes.Core.Security.Password.Settings;
 
-using System.Security.Cryptography;
 using Kitpymes.Core.Shared.Extensions;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
@@ -23,7 +22,7 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 /// <remarks>
 /// <para>En esta clase se pueden agregar todas las propiedades para la encriptación de la contraseña.</para>
 /// </remarks>
-public class EncryptionSettings
+public partial class EncryptionSettings
 {
     #region Default Values
 
@@ -82,28 +81,6 @@ public class EncryptionSettings
     /// </summary>
     public static readonly int DefaultSaltLength = SaltBytesLength.BITS128.ToValue();
 
-    /// <summary>
-    /// Valor por defecto que indica el nombre de un algoritmo hash criptográfico.
-    /// <list type="bullet">
-    /// <item>
-    /// <descripction>MD5</descripction>
-    /// </item>
-    /// <item>
-    /// <descripction>SHA1</descripction>
-    /// </item>
-    /// <item>
-    /// <descripction>SHA256</descripction>
-    /// </item>
-    /// <item>
-    /// <descripction>SHA384</descripction>
-    /// </item>
-    /// <item>
-    /// <descripction>SHA256</descripction>
-    /// </item>
-    /// </list>
-    /// <para><strong>Default:</strong> SHA256.</para>
-    /// </summary>
-    public static readonly string DefaultAlgorithmName = HashAlgorithmName.SHA256.ToString();
 
     #endregion Default Values
 
@@ -112,7 +89,6 @@ public class EncryptionSettings
     private int _headerByteLength = DefaultHeaderByteLength;
     private int _keyDerivationAlgorithm = DefaultKeyDerivationAlgorithm;
     private int _saltLength = DefaultSaltLength;
-    private string _algorithmName = DefaultAlgorithmName;
 
     /// <summary>
     /// Obtiene o establece un valor que indica el formato de los bytes.
@@ -190,22 +166,6 @@ public class EncryptionSettings
             if (value.HasValue)
             {
                 _saltLength = value.Value;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Obtiene o establece un valor que indica el nombre de un algoritmo hash criptográfico.
-    /// <para><strong>Default:</strong> <see cref="DefaultAlgorithmName"/> = SHA256.</para>
-    /// </summary>
-    public string? AlgorithmName
-    {
-        get => _algorithmName;
-        set
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                _algorithmName = value;
             }
         }
     }
