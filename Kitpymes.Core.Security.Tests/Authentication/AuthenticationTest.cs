@@ -224,14 +224,14 @@ namespace Kitypmes.Core.Security.Tests
         }
 
         [TestMethod]
-        public void LoadJsonWebToken_LifetimeValidator_Accepts_Only_FutureExpiration()
+        public void LoadJsonWebToken_Uses_IdentityModel_LifetimeValidation()
         {
+            // Hasta la 2.5.1 había un LifetimeValidator propio que sólo miraba exp y pasaba por encima de ValidateLifetime.
             var provider = LoadJsonWebToken();
 
             var parameters = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>().Get(JwtBearerDefaults.AuthenticationScheme).TokenValidationParameters;
 
-            Assert.IsTrue(parameters.LifetimeValidator!(null, DateTime.UtcNow.AddMinutes(5), null!, parameters));
-            Assert.IsFalse(parameters.LifetimeValidator!(null, DateTime.UtcNow.AddMinutes(-5), null!, parameters));
+            Assert.IsNull(parameters.LifetimeValidator);
         }
 
         [TestMethod]

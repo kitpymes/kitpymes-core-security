@@ -112,8 +112,8 @@ public static class JsonWebTokenServiceCollectionExtensions
                         ValidateAudience = !settings.Audience.ToIsNullOrEmpty(),
                         ValidAudience = settings.Audience,
 
+                        // Sin LifetimeValidator propio: el de IdentityModel mira nbf y exp, y respeta ValidateLifetime.
                         ValidateLifetime = settings.ValidateLifetime!.Value,
-                        LifetimeValidator = (notBefore, expires, securityToken, validationParameters) => expires > DateTime.UtcNow,
 
                         RequireExpirationTime = settings.RequireExpirationTime!.Value,
 
