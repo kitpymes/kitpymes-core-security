@@ -322,7 +322,7 @@ namespace Kitypmes.Core.Security.Tests
         private static AuthorizationPolicy AddCustomDefaultPolicy(IServiceCollection services)
         {
             // La aplicación ya tenía su propia política por defecto antes de LoadAuthorization.
-            var custom = new AuthorizationPolicyBuilder().RequireClaim("rol").Build();
+            var custom = new AuthorizationPolicyBuilder("Cookies").RequireClaim("rol").Build();
 
             services.AddAuthorization(x => x.DefaultPolicy = custom);
 
@@ -360,8 +360,9 @@ namespace Kitypmes.Core.Security.Tests
 
             var policy = GetOptions(services).DefaultPolicy;
 
+            // Conserva los requisitos y el esquema de la política de la aplicación, y añade el del JWT.
             CollectionAssert.AreEqual(custom.Requirements.ToArray(), policy.Requirements.ToArray());
-            CollectionAssert.AreEqual(new[] { "EsquemaTest" }, policy.AuthenticationSchemes.ToArray());
+            CollectionAssert.AreEquivalent(new[] { "Cookies", "EsquemaTest" }, policy.AuthenticationSchemes.ToArray());
         }
 
         [TestMethod]
