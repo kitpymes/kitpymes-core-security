@@ -432,6 +432,42 @@ namespace Kitypmes.Core.Security.Tests
         }
 
         [TestMethod]
+        [DataRow(14)]
+        [DataRow(20)]
+        public void Verify_Passing_HashWithLongerHeaderByteLength_DependsOnConfiguration(int headerByteLength)
+        {
+            // La longitud de la cabecera no va en el hash: con la misma configuración se verifica, con otra no.
+            Action<PasswordOptions> options = x => x.WithEnabled();
+            var settings = options.ToConfigureOrDefault().PasswordSettings;
+            settings.EncryptionSettings.HeaderByteLength = headerByteLength;
+            var service = new PasswordService(settings);
+
+            var (hashPassword, _) = service.Create(PlainPassword);
+
+            Assert.IsTrue(service.Verify(PlainPassword, hashPassword));
+            Assert.IsFalse(service.NeedsRehash(hashPassword));
+            Assert.IsFalse(CreateDefaultService().Verify(PlainPassword, hashPassword));
+        }
+
+        [TestMethod]
+        public void Verify_Passing_HashWithOtherFormatMarker_DependsOnConfiguration()
+        {
+            // La marca de formato tampoco se lee de la configuración del que creó el hash: tiene que ser la misma.
+            Action<PasswordOptions> options = x => x.WithEnabled();
+            var settings = options.ToConfigureOrDefault().PasswordSettings;
+            settings.EncryptionSettings.FormatMarker = 0xC1;
+            settings.EncryptionSettings.FormatMarker = null;
+            var service = new PasswordService(settings);
+
+            var (hashPassword, _) = service.Create(PlainPassword);
+
+            Assert.AreEqual((byte)0xC1, settings.EncryptionSettings.FormatMarker);
+            Assert.AreEqual(0xC1, Convert.FromBase64String(hashPassword!)[0]);
+            Assert.IsTrue(service.Verify(PlainPassword, hashPassword));
+            Assert.IsFalse(CreateDefaultService().Verify(PlainPassword, hashPassword));
+        }
+
+        [TestMethod]
         public void Verify_Passing_ObsoleteAlgorithmName_IsIgnored()
         {
             // AlgorithmName está obsoleto (KPY0004): no cambia ni Create ni Verify.
