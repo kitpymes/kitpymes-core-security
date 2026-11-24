@@ -354,9 +354,11 @@ namespace Kitypmes.Core.Security.Tests
         [DataRow(0, 50000)]
         [DataRow(1, 1000)]
         [DataRow(1, 50000)]
+        [DataRow(0, 120000)]
         [DataRow(1, 120000)]
         [DataRow(2, 1000)]
         [DataRow(2, 50000)]
+        [DataRow(2, 120000)]
         public void Verify_Passing_HashCreatedWithOtherAlgorithmOrIterCount_Returns_True(int keyDerivationAlgorithm, int iterCount)
         {
             // El algoritmo y las iteraciones se leen del hash: un hash creado con otra configuración se verifica con la
@@ -465,6 +467,56 @@ namespace Kitypmes.Core.Security.Tests
             Assert.AreEqual(0xC1, Convert.FromBase64String(hashPassword!)[0]);
             Assert.IsTrue(service.Verify(PlainPassword, hashPassword));
             Assert.IsFalse(CreateDefaultService().Verify(PlainPassword, hashPassword));
+        }
+
+        private static string CreateHeaderOnlyHash(uint iterCount, uint saltLength)
+        {
+            // Hash escrito a mano con la cabecera pedida y sal y clave a cero, con la longitud que exige el formato.
+            var bytes = new byte[13 + (2 * (int)saltLength)];
+            bytes[0] = EncryptionSettings.DefaultFormatMarker;
+            WriteNetworkByteOrder(bytes, 1, 1);
+            WriteNetworkByteOrder(bytes, 5, iterCount);
+            WriteNetworkByteOrder(bytes, 9, saltLength);
+
+            return Convert.ToBase64String(bytes);
+        }
+
+        [TestMethod]
+        [DataRow(10_000_000u, false)]
+        [DataRow(10_000_001u, true)]
+        public void NeedsRehash_Passing_HashAtIterCountLimit_ReadsOnlyUpToTheLimit(uint iterCount, bool expected)
+        {
+            // Con la configuración en las mismas iteraciones, un hash dentro del límite tiene los parámetros actuales
+            // (false) y uno por encima es un hash mal formado (true). NeedsRehash no calcula la clave, así que es barato.
+            var service = CreateService(1, (int)iterCount);
+
+            Assert.AreEqual(expected, service.NeedsRehash(CreateHeaderOnlyHash(iterCount, 16)));
+        }
+
+        [TestMethod]
+        [DataRow(1024u, false)]
+        [DataRow(1025u, true)]
+        public void NeedsRehash_Passing_HashAtSaltLengthLimit_ReadsOnlyUpToTheLimit(uint saltLength, bool expected)
+        {
+            // Una sal de más de 1024 bytes es un hash mal formado: el coste de verificar crece con ella.
+            var service = CreateService(1, 1000, (int)saltLength);
+
+            Assert.AreEqual(expected, service.NeedsRehash(CreateHeaderOnlyHash(1000, saltLength)));
+            Assert.IsFalse(service.Verify(PlainPassword, CreateHeaderOnlyHash(1000, saltLength)));
+        }
+
+        [TestMethod]
+        public void Create_Passing_SamePasswordTwice_Returns_DifferentHashes()
+        {
+            // La sal es aleatoria: dos hashes de la misma contraseña no coinciden, y los dos verifican.
+            var service = CreateDefaultService();
+
+            var (first, _) = service.Create(PlainPassword);
+            var (second, _) = service.Create(PlainPassword);
+
+            Assert.AreNotEqual(first, second);
+            Assert.IsTrue(service.Verify(PlainPassword, first));
+            Assert.IsTrue(service.Verify(PlainPassword, second));
         }
 
         [TestMethod]
