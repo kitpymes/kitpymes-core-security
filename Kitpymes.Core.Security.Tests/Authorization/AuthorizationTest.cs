@@ -319,6 +319,66 @@ namespace Kitypmes.Core.Security.Tests
             Assert.IsInstanceOfType<Microsoft.AspNetCore.Authorization.Infrastructure.DenyAnonymousAuthorizationRequirement>(policy.Requirements.Single());
         }
 
+        private static AuthorizationPolicy AddCustomDefaultPolicy(IServiceCollection services)
+        {
+            // La aplicación ya tenía su propia política por defecto antes de LoadAuthorization.
+            var custom = new AuthorizationPolicyBuilder().RequireClaim("rol").Build();
+
+            services.AddAuthorization(x => x.DefaultPolicy = custom);
+
+            return custom;
+        }
+
+        [TestMethod]
+        public void LoadAuthorization_WithCustomDefaultPolicy_RequireAuthenticatedUser_Replaces_It()
+        {
+            var services = ServicesWithJsonWebTokenScheme(jsonWebTokenEnabled: "false");
+            AddCustomDefaultPolicy(services);
+
+            services.LoadAuthorization(new AuthorizationSettings
+            {
+                Enabled = true,
+                DefaultPolicy = new DefaultPolicySettings { RequireAuthenticatedUser = true },
+            });
+
+            var policy = GetOptions(services).DefaultPolicy;
+
+            Assert.IsInstanceOfType<Microsoft.AspNetCore.Authorization.Infrastructure.DenyAnonymousAuthorizationRequirement>(policy.Requirements.Single());
+        }
+
+        [TestMethod]
+        public void LoadAuthorization_WithCustomDefaultPolicy_OnlyRequiredSchemes_Keeps_Its_Requirements_And_Adds_Scheme()
+        {
+            var services = ServicesWithJsonWebTokenScheme();
+            var custom = AddCustomDefaultPolicy(services);
+
+            services.LoadAuthorization(new AuthorizationSettings
+            {
+                Enabled = true,
+                DefaultPolicy = new DefaultPolicySettings { RequiredSchemes = true },
+            });
+
+            var policy = GetOptions(services).DefaultPolicy;
+
+            CollectionAssert.AreEqual(custom.Requirements.ToArray(), policy.Requirements.ToArray());
+            CollectionAssert.AreEqual(new[] { "EsquemaTest" }, policy.AuthenticationSchemes.ToArray());
+        }
+
+        [TestMethod]
+        public void LoadAuthorization_WithCustomDefaultPolicy_WithoutRules_Keeps_It()
+        {
+            var services = ServicesWithJsonWebTokenScheme();
+            var custom = AddCustomDefaultPolicy(services);
+
+            services.LoadAuthorization(new AuthorizationSettings
+            {
+                Enabled = true,
+                DefaultPolicy = new DefaultPolicySettings(),
+            });
+
+            Assert.AreSame(custom, GetOptions(services).DefaultPolicy);
+        }
+
         [TestMethod]
         public void LoadAuthorization_Passing_DefaultPolicyWithoutRules_Keeps_FrameworkDefaultPolicy()
         {
