@@ -3,6 +3,7 @@
 # y sin mutantes, y pasar en el umbral y por encima.
 set -u
 dir=$(mktemp -d)
+trap 'rm -rf "$dir"' EXIT
 script="$(dirname "$0")/check-mutacion.py"
 
 informe() { # killed survived nocoverage timeout

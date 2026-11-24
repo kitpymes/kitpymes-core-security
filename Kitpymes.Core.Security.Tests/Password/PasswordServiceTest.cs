@@ -947,19 +947,25 @@ namespace Kitypmes.Core.Security.Tests
         }
 
         [TestMethod]
-        [DataRow(30)]
-        [DataRow(60)]
-        [DataRow(100)]
-        public void CreateRandom_WithRequiredUniqueChars_Returns_NullOrValidPassword(int requiredMinLength)
+        [DataRow(30, true)]
+        [DataRow(60, false)]
+        [DataRow(100, false)]
+        public void CreateRandom_WithRequiredUniqueChars_Returns_NullOrValidPassword(int requiredMinLength, bool mustCreate)
         {
             // CreateRandom nunca devuelve una contraseña que no cumpla la política: si no llega, devuelve null.
-            // Con 60 y 100 no hay bastantes caracteres distintos (se usan todos los disponibles).
+            // Con 30 tiene que crearla. Con 60 y 100 no hay bastantes caracteres distintos (se usan todos los
+            // disponibles); que hoy devuelva null es un límite pendiente de CreateRandom, no lo que se quiere.
             Action<PasswordOptions> options = x => x.WithEnabled().WithRequiredUniqueChars().WithRequiredMinLength(requiredMinLength);
             var service = new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
 
             for (var i = 0; i < 20; i++)
             {
                 var plainPassword = service.CreateRandom();
+
+                if (mustCreate)
+                {
+                    Assert.IsNotNull(plainPassword);
+                }
 
                 Assert.IsTrue(plainPassword is null || service.Validate(plainPassword).Count == 0, plainPassword);
             }
