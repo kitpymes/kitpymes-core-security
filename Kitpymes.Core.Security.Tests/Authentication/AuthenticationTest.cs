@@ -938,6 +938,10 @@ namespace Kitypmes.Core.Security.Tests
             StringAssert.Contains(exception.Message, "AccessDeniedDateTime");
             StringAssert.Contains(exception.Message, "\"Username\"");
             StringAssert.Contains(exception.Message, "ana-test");
+
+            // User, como en la 2.6.1, sale del nombre leído como JSON: sin comillas.
+            using var json = System.Text.Json.JsonDocument.Parse(exception.Message);
+            Assert.AreEqual("ana-test", json.RootElement.GetProperty("User").GetString());
         }
 
         [TestMethod]

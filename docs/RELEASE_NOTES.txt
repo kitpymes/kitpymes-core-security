@@ -6,7 +6,7 @@ Corrección de un fallo de seguridad en CustomCookieAuthenticationEvents.Redirec
 - Sin usuario, el campo User del mensaje llevaba el nombre del usuario del sistema operativo del servidor. Ahora lleva "Anonymous".
 - Sin HttpContext lanzaba SharedException. Ahora lanza UnauthorizedAccessException con User y OptionalData.
 CAMBIO DE COMPORTAMIENTO: cambia el tipo de excepción en esos casos. Quien capturara JsonException (en los manejadores o en RedirectToAccessDenied) o SharedException (en RedirectToAccessDenied sin HttpContext): ahora no salta; capturar UnauthorizedAccessException en RedirectToAccessDenied. Los manejadores ya no lanzan: deniegan.
-- El mensaje mantiene sus campos (User, IP, UserAgent, ContentType, Request, OptionalData con AccessDeniedDateTime y Username). Único cambio: User es el nombre tal cual (Identity.Name); antes se deserializaba como JSON, así que un nombre guardado entre comillas salía sin ellas y ahora sale con ellas.
+- El mensaje mantiene sus campos (User, IP, UserAgent, ContentType, Request, OptionalData con AccessDeniedDateTime y Username) y sus valores en los casos que ya funcionaban: User sigue leyendo ClaimTypes.Name como JSON, como la guarda Shared; sólo si no es JSON usa el valor tal cual.
 - El paquete se compara al empaquetar con la API pública de la 2.6.1 (validación de paquete).
 
 # v.2.6.1
