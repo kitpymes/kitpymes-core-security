@@ -45,6 +45,8 @@ public interface IPasswordService
     /// <remarks>
     /// El algoritmo, las iteraciones y la longitud de la sal se leen del propio hash, así que un hash creado con otra
     /// configuración se sigue verificando. La marca de formato y la longitud de la cabecera sí tienen que ser las mismas.
+    /// No aplica la política de contraseñas (<c>Validate</c>): sólo la comprueba <c>Create</c>, así que una contraseña creada
+    /// con una política anterior sigue entrando aunque no cumpla la actual.
     /// </remarks>
     /// <returns>true si la contraseña corresponde al hash; false si no corresponde, si alguno de los dos es nulo o vacío, o si el hash está mal formado. No lanza excepciones por el contenido de los argumentos.</returns>
     bool Verify(string? plainPassword, string? hashPassword);

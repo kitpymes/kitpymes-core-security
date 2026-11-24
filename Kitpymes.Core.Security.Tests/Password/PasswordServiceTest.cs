@@ -362,7 +362,7 @@ namespace Kitypmes.Core.Security.Tests
         public void Verify_Passing_HashCreatedWithOtherAlgorithmOrIterCount_Returns_True(int keyDerivationAlgorithm, int iterCount)
         {
             // El algoritmo y las iteraciones se leen del hash: un hash creado con otra configuración se verifica con la
-            // configuración por defecto (HMACSHA256, 50000) y con cualquier otra. Hasta la 2.2.0 daba false.
+            // configuración por defecto (HMACSHA256, 600000) y con cualquier otra. Hasta la 2.2.0 daba false.
             var creator = CreateService(keyDerivationAlgorithm, iterCount);
             var otherConfigurations = new[] { CreateDefaultService(), CreateService(2, 2000), CreateService(0, 3000, 32) };
 
@@ -598,6 +598,89 @@ namespace Kitypmes.Core.Security.Tests
 
             public System.Collections.ObjectModel.ReadOnlyCollection<PasswordErrorResult> Validate(string? plainPassword)
                 => new System.Collections.ObjectModel.ReadOnlyCollection<PasswordErrorResult>(Array.Empty<PasswordErrorResult>());
+        }
+
+        private static PasswordService CreatePolicyService(Action<PasswordOptions> options)
+        {
+            return new PasswordService(options.ToConfigureOrDefault().PasswordSettings);
+        }
+
+        [TestMethod]
+        [DataRow("Password")]
+        [DataRow("abcdef")]
+        [DataRow("a")]
+        public void Verify_Passing_PasswordThatMetOldPolicy_WithStricterPolicy_Returns_True(string plainPassword)
+        {
+            // La política sólo se comprueba en Create: endurecerla no deja fuera a quien ya tenía contraseña.
+            // Hasta la 2.3.0, Verify aplicaba la política actual y estos casos daban false.
+            var oldService = CreatePolicyService(x => x.WithEnabled().WithRequiredMinLength(1));
+            var newService = CreatePolicyService(x => x
+                .WithEnabled()
+                .WithRequiredMinLength(12)
+                .WithRequireDigit()
+                .WithRequireEspecialCharacters()
+                .WithRequireUppercase()
+                .WithRequiredUniqueChars());
+
+            var (hashPassword, oldErrors) = oldService.Create(plainPassword);
+
+            Assert.AreEqual(0, oldErrors.Count);
+            Assert.IsTrue(newService.Verify(plainPassword, hashPassword));
+            Assert.IsFalse(newService.Verify(plainPassword + "x", hashPassword));
+
+            var (newHash, newErrors) = newService.Create(plainPassword);
+
+            Assert.IsNull(newHash);
+            Assert.AreNotEqual(0, newErrors.Count);
+        }
+
+        [TestMethod]
+        public void Verify_Passing_PasswordThatFailsPolicy_StillChecksTheHash()
+        {
+            // Sin la política, Verify depende sólo del hash: una contraseña corta y distinta sigue dando false.
+            var oldService = CreatePolicyService(x => x.WithEnabled().WithRequiredMinLength(1));
+            var (hashPassword, _) = oldService.Create("a");
+
+            Assert.IsTrue(CreateDefaultService().Verify("a", hashPassword));
+            Assert.IsFalse(CreateDefaultService().Verify("b", hashPassword));
+            Assert.IsFalse(CreateDefaultService().Verify("A", hashPassword));
+        }
+
+        [TestMethod]
+        public void DefaultIterCount_Is_OwaspRecommendationForHmacSha256()
+        {
+            // OWASP, Password Storage Cheat Sheet: PBKDF2-HMAC-SHA256, 600000 iteraciones.
+            Assert.AreEqual(600000, EncryptionSettings.DefaultIterCount);
+
+            var decoded = CreateDecodedHash(CreateDefaultService());
+
+            Assert.AreEqual(1u, ReadNetworkByteOrder(decoded, 1));
+            Assert.AreEqual(600000u, ReadNetworkByteOrder(decoded, 5));
+        }
+
+        [TestMethod]
+        public void NeedsRehash_Passing_HashWithOldDefaultIterCount_Returns_True_And_Verifies()
+        {
+            // Un hash creado con el valor por defecto de la 2.3.0 (50000) se sigue verificando y pide regenerarse;
+            // el hash nuevo ya no lo pide.
+            var service = CreateDefaultService();
+            var (oldHash, _) = CreateService(1, 50000).Create(PlainPassword);
+
+            Assert.IsTrue(service.Verify(PlainPassword, oldHash));
+            Assert.IsTrue(service.NeedsRehash(oldHash));
+
+            var (newHash, _) = service.Create(PlainPassword);
+
+            Assert.IsTrue(service.Verify(PlainPassword, newHash));
+            Assert.IsFalse(service.NeedsRehash(newHash));
+        }
+
+        private static uint ReadNetworkByteOrder(byte[] buffer, int offset)
+        {
+            return ((uint)buffer[offset] << 24)
+                | ((uint)buffer[offset + 1] << 16)
+                | ((uint)buffer[offset + 2] << 8)
+                | buffer[offset + 3];
         }
 
         #endregion Verify
