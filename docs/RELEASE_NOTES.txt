@@ -3,8 +3,9 @@ Parche de seguridad: la autenticación por JWT aceptaba tokens que todavía no e
 Corrección de un fallo de seguridad: la configuración de JwtBearer ponía un LifetimeValidator propio que sólo comprobaba que la fecha de caducidad (exp) fuera futura y sustituía a la validación de IdentityModel. Por eso:
 - Se aceptaba un token con nbf (no válido antes de) en el futuro. Ahora se rechaza.
 - WithValidateLifetime(false) (ValidateLifetime = false) no tenía efecto: un token caducado se rechazaba igual. Ahora no se comprueban las fechas, como dice el ajuste.
-- Con RequireExpirationTime = false, un token sin exp se rechazaba igual. Ahora se acepta, como dice el ajuste. Con el valor por defecto (true), se sigue rechazando.
-Ahora valida las fechas IdentityModel, con ClockSkew = 0 como antes: un token caducado o todavía no válido se rechaza al segundo.
+- Con ValidateLifetime activo y RequireExpirationTime = false, un token sin exp se rechazaba igual. Ahora se acepta, como dice el ajuste. Con el valor por defecto (true), se sigue rechazando. (Sin test.)
+Ahora valida las fechas IdentityModel, sin tolerancia (ClockSkew = 0, como antes). exp y nbf van en segundos enteros: el token se rechaza en cuanto la hora actual pasa de exp, o mientras nbf está por delante de ella.
+- Aviso: JsonWebTokenService.Create emite los tokens con nbf = la hora actual. Si el servidor que valida va atrasado respecto al que emite, un token recién emitido se rechaza hasta que su hora llega a nbf; antes se aceptaba. Mantener los relojes sincronizados.
 - El paquete se compara al empaquetar con la API pública de la 2.5.1 (validación de paquete).
 
 # v.2.5.1
