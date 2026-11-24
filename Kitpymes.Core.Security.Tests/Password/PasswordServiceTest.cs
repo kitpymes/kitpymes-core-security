@@ -311,9 +311,9 @@ namespace Kitypmes.Core.Security.Tests
         [DataRow(uint.MaxValue)]
         public void Verify_Passing_HashOfOtherOrUnknownAlgorithm_Returns_False(uint algorithm)
         {
-            // Con la configuración por defecto (HMACSHA256, código 1), un hash marcado como HMACSHA1 (0) o HMACSHA512 (2)
-            // no vale, y un código desconocido es un hash mal formado. Hasta la 2.1.1, un código desconocido se tomaba
-            // como HMACSHA256 y el hash se aceptaba.
+            // Un hash HMACSHA256 con la cabecera cambiada a HMACSHA1 (0) o HMACSHA512 (2) no vale: se calcula con ese
+            // algoritmo y la clave no coincide. Un código desconocido es un hash mal formado (hasta la 2.1.1 se tomaba
+            // como HMACSHA256 y el hash se aceptaba).
             var service = CreateDefaultService();
 
             var decoded = CreateDecodedHash(service);
@@ -338,25 +338,178 @@ namespace Kitypmes.Core.Security.Tests
             Assert.IsFalse(service.Verify(PlainPassword, Convert.ToBase64String(saltLength)));
         }
 
-        [TestMethod]
-        public void Verify_Passing_HashCreatedWithOtherAlgorithm_Returns_False()
+        private static PasswordService CreateService(int keyDerivationAlgorithm, int iterCount, int saltLength = 16)
         {
-            // Un hash bueno hecho con HMACSHA512 no vale para un servicio configurado con HMACSHA256, ni al revés.
-            Action<PasswordOptions> sha512 = x => x.WithEnabled();
-            var sha512Settings = sha512.ToConfigureOrDefault().PasswordSettings;
-            sha512Settings.EncryptionSettings.KeyDerivationAlgorithm = 2;
-            sha512Settings.EncryptionSettings.AlgorithmName = "SHA512";
-            var sha512Service = new PasswordService(sha512Settings);
+            Action<PasswordOptions> options = x => x.WithEnabled();
+            var settings = options.ToConfigureOrDefault().PasswordSettings;
+            settings.EncryptionSettings.KeyDerivationAlgorithm = keyDerivationAlgorithm;
+            settings.EncryptionSettings.IterCount = iterCount;
+            settings.EncryptionSettings.SaltLength = saltLength;
 
+            return new PasswordService(settings);
+        }
+
+        [TestMethod]
+        [DataRow(0, 1000)]
+        [DataRow(0, 50000)]
+        [DataRow(1, 1000)]
+        [DataRow(1, 50000)]
+        [DataRow(1, 120000)]
+        [DataRow(2, 1000)]
+        [DataRow(2, 50000)]
+        public void Verify_Passing_HashCreatedWithOtherAlgorithmOrIterCount_Returns_True(int keyDerivationAlgorithm, int iterCount)
+        {
+            // El algoritmo y las iteraciones se leen del hash: un hash creado con otra configuración se verifica con la
+            // configuración por defecto (HMACSHA256, 50000) y con cualquier otra. Hasta la 2.2.0 daba false.
+            var creator = CreateService(keyDerivationAlgorithm, iterCount);
+            var otherConfigurations = new[] { CreateDefaultService(), CreateService(2, 2000), CreateService(0, 3000, 32) };
+
+            var (hashPassword, errors) = creator.Create(PlainPassword);
+
+            Assert.AreEqual(0, errors.Count);
+            Assert.IsTrue(creator.Verify(PlainPassword, hashPassword));
+
+            foreach (var service in otherConfigurations)
+            {
+                Assert.IsTrue(service.Verify(PlainPassword, hashPassword));
+                Assert.IsFalse(service.Verify("Passwore", hashPassword));
+            }
+        }
+
+        [TestMethod]
+        [DataRow(32)]
+        [DataRow(64)]
+        public void Verify_Passing_HashCreatedWithOtherSaltLength_Returns_True(int saltLength)
+        {
+            var creator = CreateService(1, 1000, saltLength);
+
+            var (hashPassword, _) = creator.Create(PlainPassword);
+
+            Assert.IsTrue(CreateDefaultService().Verify(PlainPassword, hashPassword));
+            Assert.IsFalse(CreateDefaultService().Verify("Passwore", hashPassword));
+        }
+
+        [TestMethod]
+        [DataRow(0u)]
+        [DataRow(10_000_001u)]
+        [DataRow(uint.MaxValue)]
+        public void Verify_Passing_HashWithIterCountOutOfRange_Returns_False(uint iterCount)
+        {
+            // 0 iteraciones o más de 10 millones es un hash mal formado: no se llega a calcular nada.
             var service = CreateDefaultService();
 
-            var (sha512Hash, sha512Errors) = sha512Service.Create(PlainPassword);
-            var (sha256Hash, _) = service.Create(PlainPassword);
+            var decoded = CreateDecodedHash(service);
 
-            Assert.AreEqual(0, sha512Errors.Count);
-            Assert.IsTrue(sha512Service.Verify(PlainPassword, sha512Hash));
-            Assert.IsFalse(service.Verify(PlainPassword, sha512Hash));
-            Assert.IsFalse(sha512Service.Verify(PlainPassword, sha256Hash));
+            WriteNetworkByteOrder(decoded, 5, iterCount);
+
+            Assert.IsFalse(service.Verify(PlainPassword, Convert.ToBase64String(decoded)));
+        }
+
+        [TestMethod]
+        public void Verify_Passing_HashWithZeroSaltLength_Returns_False()
+        {
+            var service = CreateDefaultService();
+
+            var decoded = CreateDecodedHash(service).Take(13).ToArray();
+
+            WriteNetworkByteOrder(decoded, 9, 0);
+
+            Assert.IsFalse(service.Verify(PlainPassword, Convert.ToBase64String(decoded)));
+        }
+
+        [TestMethod]
+        public void Verify_Passing_HashWithLowerHeaderByteLengthConfigured_Returns_False()
+        {
+            // Una cabecera configurada por debajo de 13 bytes no cabe: el hash no se puede leer.
+            var service = CreateDefaultService();
+            var (hashPassword, _) = service.Create(PlainPassword);
+
+            Action<PasswordOptions> options = x => x.WithEnabled();
+            var settings = options.ToConfigureOrDefault().PasswordSettings;
+            settings.EncryptionSettings.HeaderByteLength = 12;
+
+            Assert.IsFalse(new PasswordService(settings).Verify(PlainPassword, hashPassword));
+        }
+
+        [TestMethod]
+        public void Verify_Passing_ObsoleteAlgorithmName_IsIgnored()
+        {
+            // AlgorithmName está obsoleto (KPY0004): no cambia ni Create ni Verify.
+            Action<PasswordOptions> options = x => x.WithEnabled();
+            var settings = options.ToConfigureOrDefault().PasswordSettings;
+#pragma warning disable KPY0004
+            Assert.AreEqual(EncryptionSettings.DefaultAlgorithmName, settings.EncryptionSettings.AlgorithmName);
+            settings.EncryptionSettings.AlgorithmName = "MD5";
+            settings.EncryptionSettings.AlgorithmName = " ";
+            Assert.AreEqual("MD5", settings.EncryptionSettings.AlgorithmName);
+#pragma warning restore KPY0004
+            var service = new PasswordService(settings);
+
+            var (hashPassword, _) = service.Create(PlainPassword);
+
+            Assert.IsTrue(service.Verify(PlainPassword, hashPassword));
+            Assert.IsTrue(CreateDefaultService().Verify(PlainPassword, hashPassword));
+        }
+
+        [TestMethod]
+        public void NeedsRehash_Passing_HashWithCurrentParameters_Returns_False()
+        {
+            var service = CreateService(2, 2000, 32);
+
+            var (hashPassword, _) = service.Create(PlainPassword);
+
+            Assert.IsFalse(service.NeedsRehash(hashPassword));
+        }
+
+        [TestMethod]
+        [DataRow(0, 2000, 32)]
+        [DataRow(1, 2000, 32)]
+        [DataRow(2, 1000, 32)]
+        [DataRow(2, 3000, 32)]
+        [DataRow(2, 2000, 16)]
+        [DataRow(2, 2000, 64)]
+        public void NeedsRehash_Passing_HashWithOtherParameters_Returns_True(int keyDerivationAlgorithm, int iterCount, int saltLength)
+        {
+            // La configuración actual es HMACSHA512, 2000 iteraciones y sal de 32 bytes; cambia uno de los tres.
+            var current = CreateService(2, 2000, 32);
+            var old = CreateService(keyDerivationAlgorithm, iterCount, saltLength);
+
+            var (hashPassword, _) = old.Create(PlainPassword);
+
+            Assert.IsTrue(current.Verify(PlainPassword, hashPassword));
+            Assert.IsTrue(current.NeedsRehash(hashPassword));
+        }
+
+        [TestMethod]
+        [DataRow(null)]
+        [DataRow("")]
+        [DataRow("no es base64")]
+        [DataRow("wA==")]
+        public void NeedsRehash_Passing_NullOrMalformedHash_Returns_True(string? hashPassword)
+        {
+            Assert.IsTrue(CreateDefaultService().NeedsRehash(hashPassword));
+        }
+
+        [TestMethod]
+        public void NeedsRehash_Passing_ThroughInterfaceDefault_Returns_False()
+        {
+            // Una implementación propia de IPasswordService que no sobrescribe NeedsRehash nunca pide regenerar.
+            IPasswordService service = new PasswordServiceWithoutRehash();
+
+            Assert.IsFalse(service.NeedsRehash("cualquier cosa"));
+        }
+
+        private sealed class PasswordServiceWithoutRehash : IPasswordService
+        {
+            public string? CreateRandom() => null;
+
+            public (string? hashPassword, System.Collections.ObjectModel.ReadOnlyCollection<PasswordErrorResult> errors) Create(string? plainPassword)
+                => (null, new System.Collections.ObjectModel.ReadOnlyCollection<PasswordErrorResult>(Array.Empty<PasswordErrorResult>()));
+
+            public bool Verify(string? plainPassword, string? hashPassword) => false;
+
+            public System.Collections.ObjectModel.ReadOnlyCollection<PasswordErrorResult> Validate(string? plainPassword)
+                => new System.Collections.ObjectModel.ReadOnlyCollection<PasswordErrorResult>(Array.Empty<PasswordErrorResult>());
         }
 
         #endregion Verify

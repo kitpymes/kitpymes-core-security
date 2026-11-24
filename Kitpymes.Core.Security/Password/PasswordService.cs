@@ -36,6 +36,17 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 public class PasswordService(PasswordSettings settings)
     : IPasswordService
 {
+    /// <summary>
+    /// Iteraciones máximas que se aceptan al leer un hash. Muy por encima de las recomendadas hoy para PBKDF2;
+    /// evita que un hash con un número absurdo deje bloqueada la verificación.
+    /// </summary>
+    private const uint MaxIterCount = 10_000_000;
+
+    /// <summary>
+    /// Longitud mínima de la cabecera: la marca de formato y tres enteros de 4 bytes.
+    /// </summary>
+    private const int MinHeaderByteLength = 13;
+
     private PasswordSettings PasswordSettings { get; set; } = settings;
 
     /// <inheritdoc/>
@@ -122,6 +133,21 @@ public class PasswordService(PasswordSettings settings)
         var isValid = errors.Count == 0 && VerifyPassword(hashPassword, plainPassword);
 
         return isValid;
+    }
+
+    /// <inheritdoc/>
+    public bool NeedsRehash(string? hashPassword)
+    {
+        if (!TryReadHash(hashPassword, out var prf, out var iterCount, out var salt, out _))
+        {
+            return true;
+        }
+
+        var settings = PasswordSettings.EncryptionSettings;
+
+        return prf != settings.KeyDerivationAlgorithm!.Value.ToEnum<KeyDerivationPrf>()
+            || iterCount != settings.IterCount!.Value
+            || salt.Length != settings.SaltLength!.Value;
     }
 
     /// <inheritdoc/>
@@ -246,109 +272,84 @@ public class PasswordService(PasswordSettings settings)
 
     private bool VerifyPassword(string? hashedPassword, string? plainPassword)
     {
-        if (plainPassword.ToIsNullOrEmpty() || hashedPassword.ToIsNullOrEmpty())
+        if (plainPassword.ToIsNullOrEmpty() || !TryReadHash(hashedPassword, out var prf, out var iterCount, out var salt, out var expectedSubkey))
         {
             return false;
         }
 
-        var plain = plainPassword;
-        var hash = hashedPassword;
+        // El algoritmo y las iteraciones salen de la cabecera del propio hash, no de la configuración,
+        // para que un hash guardado se siga verificando aunque la configuración cambie.
+        var actualSubkey = KeyDerivation.Pbkdf2(plainPassword, salt, prf, iterCount, expectedSubkey.Length);
 
-        byte[] decodedHashedPassword;
+        // Comparación en tiempo constante, para no dar pistas por el tiempo de respuesta.
+        return CryptographicOperations.FixedTimeEquals(actualSubkey, expectedSubkey);
+    }
+
+    /// <summary>
+    /// Lee la cabecera de un hash creado por <see cref="Create"/>: marca de formato, algoritmo, iteraciones
+    /// y longitud de la sal, seguidos de la sal y de la clave derivada, que mide lo mismo que la sal.
+    /// </summary>
+    /// <param name="hashedPassword">Hash en base64.</param>
+    /// <param name="prf">Algoritmo leído de la cabecera.</param>
+    /// <param name="iterCount">Iteraciones leídas de la cabecera.</param>
+    /// <param name="salt">Sal del hash.</param>
+    /// <param name="subkey">Clave derivada guardada en el hash.</param>
+    /// <returns>false si el hash es nulo, vacío o está mal formado.</returns>
+    private bool TryReadHash(string? hashedPassword, out KeyDerivationPrf prf, out int iterCount, out byte[] salt, out byte[] subkey)
+    {
+        prf = default;
+        iterCount = 0;
+        salt = Array.Empty<byte>();
+        subkey = Array.Empty<byte>();
+
+        if (hashedPassword.ToIsNullOrEmpty())
+        {
+            return false;
+        }
+
+        byte[] decoded;
 
         try
         {
-            decodedHashedPassword = Convert.FromBase64String(hash);
+            decoded = Convert.FromBase64String(hashedPassword);
         }
-        catch (Exception)
+        catch (FormatException)
         {
             return false;
         }
 
         var settings = PasswordSettings.EncryptionSettings;
 
-        if (decodedHashedPassword.Length == 0 || decodedHashedPassword[0] != settings.FormatMarker!.Value)
+        var headerLength = settings.HeaderByteLength!.Value;
+
+        // La cabecera lleva la marca y tres enteros de 4 bytes (algoritmo, iteraciones y sal): 13 bytes como mínimo.
+        if (headerLength < MinHeaderByteLength || decoded.Length < headerLength || decoded[0] != settings.FormatMarker!.Value)
         {
             return false;
         }
 
-        try
+        var prfRead = ReadNetworkByteOrder(decoded, 1);
+        var iterCountRead = ReadNetworkByteOrder(decoded, 5);
+        var saltLengthRead = ReadNetworkByteOrder(decoded, 9);
+
+        // Un algoritmo desconocido, unas iteraciones fuera de rango o una sal vacía son un hash mal formado.
+        if (prfRead > 2 || iterCountRead == 0 || iterCountRead > MaxIterCount || saltLengthRead == 0)
         {
-            var shaUInt = ReadNetworkByteOrder(decodedHashedPassword, 1);
-
-            // Un código de algoritmo desconocido es un hash mal formado.
-            if (shaUInt > 2)
-            {
-                return false;
-            }
-
-            var verifyPrf = shaUInt switch
-            {
-                0 => KeyDerivationPrf.HMACSHA1,
-                1 => KeyDerivationPrf.HMACSHA256,
-                _ => KeyDerivationPrf.HMACSHA512,
-            };
-
-            if (verifyPrf != settings.KeyDerivationAlgorithm!.Value.ToEnum<KeyDerivationPrf>())
-            {
-                return false;
-            }
-
-            var verifyAlgorithmName = shaUInt switch
-            {
-                0 => HashAlgorithmName.SHA1,
-                1 => HashAlgorithmName.SHA256,
-                _ => HashAlgorithmName.SHA512,
-            };
-
-            if (verifyAlgorithmName != settings.AlgorithmName.ToHashAlgorithmName(HashAlgorithmName.SHA256))
-            {
-                return false;
-            }
-
-            int iterCountRead = (int)ReadNetworkByteOrder(decodedHashedPassword, 5);
-
-            if (iterCountRead != settings.IterCount!.Value)
-            {
-                return false;
-            }
-
-            int saltLengthRead = (int)ReadNetworkByteOrder(decodedHashedPassword, 9);
-
-            if (saltLengthRead != settings.SaltLength!.Value)
-            {
-                return false;
-            }
-
-            byte[] salt = new byte[settings.SaltLength!.Value];
-
-            Buffer.BlockCopy(decodedHashedPassword, settings.HeaderByteLength!.Value, salt, 0, salt.Length);
-
-            int subkeyLength = decodedHashedPassword.Length - settings.HeaderByteLength!.Value - salt.Length;
-
-            if (subkeyLength != settings.SaltLength!.Value)
-            {
-                return false;
-            }
-
-            byte[] expectedSubkey = new byte[subkeyLength];
-
-            Buffer.BlockCopy(decodedHashedPassword, settings.HeaderByteLength!.Value + salt.Length, expectedSubkey, 0, expectedSubkey.Length);
-
-            byte[] actualSubkey = new byte[settings.SaltLength!.Value];
-
-            actualSubkey = KeyDerivation.Pbkdf2(plain, salt, settings.KeyDerivationAlgorithm!.Value.ToEnum<KeyDerivationPrf>(), settings.IterCount!.Value, subkeyLength);
-
-            // Comparación en tiempo constante, para no dar pistas por el tiempo de respuesta.
-            return CryptographicOperations.FixedTimeEquals(actualSubkey, expectedSubkey);
-        }
-        catch
-        {
-            // This should never occur except in the case of a malformed payload, where
-            // we might go off the end of the array. Regardless, a malformed payload
-            // implies verification failed.
             return false;
         }
+
+        // La clave derivada mide lo mismo que la sal (así la escribe CreatePassword): un hash cortado o alargado no vale.
+        if ((long)decoded.Length - headerLength != 2L * saltLengthRead)
+        {
+            return false;
+        }
+
+        prf = (KeyDerivationPrf)prfRead;
+        iterCount = (int)iterCountRead;
+        salt = decoded.AsSpan(headerLength, (int)saltLengthRead).ToArray();
+        subkey = decoded.AsSpan(headerLength + (int)saltLengthRead).ToArray();
+
+        return true;
     }
 
     #endregion Private
