@@ -647,6 +647,34 @@ namespace Kitypmes.Core.Security.Tests
         }
 
         [TestMethod]
+        [DataRow("")]
+        [DataRow(null)]
+        public void Verify_Passing_EmptyPassword_WithHashOfEmptyPassword_Returns_False(string? plainPassword)
+        {
+            // Sin la política, lo único que impide entrar con una contraseña vacía es la comprobación de Verify:
+            // el hash, hecho a mano, sí corresponde a la cadena vacía.
+            var salt = new byte[16];
+            var subkey = Microsoft.AspNetCore.Cryptography.KeyDerivation.KeyDerivation.Pbkdf2(
+                string.Empty,
+                salt,
+                Microsoft.AspNetCore.Cryptography.KeyDerivation.KeyDerivationPrf.HMACSHA256,
+                1000,
+                16);
+            var decoded = new byte[13 + 16 + 16];
+            decoded[0] = 0xC0;
+            WriteNetworkByteOrder(decoded, 1, 1);
+            WriteNetworkByteOrder(decoded, 5, 1000);
+            WriteNetworkByteOrder(decoded, 9, 16);
+            Buffer.BlockCopy(salt, 0, decoded, 13, 16);
+            Buffer.BlockCopy(subkey, 0, decoded, 29, 16);
+            var hashPassword = Convert.ToBase64String(decoded);
+
+            // El hash está bien formado: con sus mismos parámetros no pide regenerarse.
+            Assert.IsFalse(CreateService(1, 1000).NeedsRehash(hashPassword));
+            Assert.IsFalse(CreateDefaultService().Verify(plainPassword, hashPassword));
+        }
+
+        [TestMethod]
         public void DefaultIterCount_Is_OwaspRecommendationForHmacSha256()
         {
             // OWASP, Password Storage Cheat Sheet: PBKDF2-HMAC-SHA256, 600000 iteraciones.
