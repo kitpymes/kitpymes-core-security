@@ -1,6 +1,7 @@
 namespace Kitpymes.Core.Security.Tests.Authentication
 {
     using Kitpymes.Core.Security;
+    using Kitpymes.Core.Security.Authentication;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Http;
