@@ -80,7 +80,11 @@ public class JsonWebTokenService(JsonWebTokenSettings settings)
 
         using RSA rsa = RSA.Create();
         rsa.ImportRSAPrivateKey(Convert.FromBase64String(JsonWebTokenSettings.PrivateKey!), out _);
-        var signingCredentials = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256);
+
+        // Sin caché de firmadores: el RSA se libera al salir y IdentityModel reutilizaría para la misma clave el firmador
+        // del primer token, con su RSA ya liberado: el segundo token del proceso fallaba (ObjectDisposedException).
+        var signingKey = new RsaSecurityKey(rsa) { CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false } };
+        var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.RsaSha256);
 
         var jwtSecurityToken = new JwtSecurityToken(
             issuer: JsonWebTokenSettings.Issuer,
