@@ -111,6 +111,48 @@ namespace Kitypmes.Core.Security.Tests
         }
 
         [TestMethod]
+        public async System.Threading.Tasks.Task JsonWebTokenService_Crea_dos_tokens_seguidos_con_la_misma_clave()
+        {
+            using RSA rsa = RSA.Create();
+            var privateKey = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+            var publicKey = Convert.ToBase64String(rsa.ExportRSAPublicKey());
+
+            _jsonWebTokenService = services.LoadSecurity(sec =>
+                sec.WithAuthentication(auth =>
+                    auth.WithJsonWebToken(options =>
+                        options.WithEnabled().WithPrivateKey(privateKey).WithPublicKey(publicKey))))
+                            .GetAuthJsonWebToken();
+
+            var claims = new List<Claim> { new (ClaimTypes.UserData, "usuario") };
+
+            var primero = _jsonWebTokenService.Create(claims);
+
+            // El segundo login del proceso: antes reventaba con el RSA del primero ya liberado.
+            var segundo = _jsonWebTokenService.Create(claims);
+
+            // Get sólo lee el token; la firma de los dos se comprueba con la clave pública.
+            using RSA publicRsa = RSA.Create();
+            publicRsa.ImportRSAPublicKey(Convert.FromBase64String(publicKey), out _);
+            var parameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                IssuerSigningKey = new Microsoft.IdentityModel.Tokens.RsaSecurityKey(publicRsa)
+                {
+                    CryptoProviderFactory = new Microsoft.IdentityModel.Tokens.CryptoProviderFactory { CacheSignatureProviders = false },
+                },
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false,
+            };
+
+            var handler = new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler();
+
+            Assert.IsNotNull(primero.Token);
+            Assert.IsNotNull(segundo.Token);
+            Assert.IsTrue((await handler.ValidateTokenAsync(primero.Token, parameters)).IsValid);
+            Assert.IsTrue((await handler.ValidateTokenAsync(segundo.Token, parameters)).IsValid);
+        }
+
+        [TestMethod]
         public void JsonWebTokenOptions_Passing_Claims_And_Headers_Returns_Values()
         {
             // Para crear claves RSA online: https://dotnetfiddle.net/EgxEwu
