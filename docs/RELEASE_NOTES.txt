@@ -1,3 +1,8 @@
+# v.2.6.4
+Parche: firmar varios JWT con la misma clave en el mismo proceso ya no falla. Sin cambios en la API pública.
+Corrección de un fallo: JsonWebTokenService.Create liberaba el RSA de la clave privada al terminar, pero IdentityModel guardaba en caché el firmador de esa clave y lo reutilizaba en el siguiente token, con el RSA ya liberado: el segundo Create con la misma clave lanzaba ObjectDisposedException. Tras el fallo, IdentityModel quita ese firmador de la caché, así que el siguiente funcionaba y el otro volvía a fallar: en una API, uno de cada dos inicios de sesión desde que arranca (leído en el código de IdentityModel 7.2.0; el test comprueba el segundo). Ahora el firmador no se guarda en caché. Test nuevo que crea dos tokens seguidos y comprueba la firma de los dos.
+- El paquete se compara al empaquetar con la API pública de la 2.6.3.
+
 # v.2.6.3
 Parche: una ruta pública ya no falla cuando la petición trae un JWT inválido. Sin cambios en la API pública.
 Corrección de un fallo: el evento OnAuthenticationFailed de JwtBearer lanzaba UnauthorizedAccessException. La autenticación corre en todas las peticiones, así que un token mal formado, caducado o firmado con otra clave en la cabecera Authorization tumbaba también las rutas [AllowAnonymous], que no piden usuario (probado con los tres). Comprobado con un servidor de pruebas: con la 2.6.2, GET a una ruta pública con "Bearer no-es-un-token" lanzaba la excepción. Ahora OnAuthenticationFailed guarda el error y la petición sigue sin usuario; la ruta pública responde.
