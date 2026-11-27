@@ -316,7 +316,8 @@ namespace Kitypmes.Core.Security.Tests
                 NotBefore = notBefore,
                 Expires = expires,
                 IssuedAt = notBefore,
-                SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256),
+                // Sin caché de firmadores: IdentityModel reutilizaría el de la misma clave con un RSA ya liberado.
+                SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsa) { CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false } }, SecurityAlgorithms.RsaSha256),
             };
 
             return new Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler().CreateToken(descriptor);
