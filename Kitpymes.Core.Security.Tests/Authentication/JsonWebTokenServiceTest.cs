@@ -148,8 +148,11 @@ namespace Kitypmes.Core.Security.Tests
 
             Assert.IsNotNull(primero.Token);
             Assert.IsNotNull(segundo.Token);
-            Assert.IsTrue((await handler.ValidateTokenAsync(primero.Token, parameters)).IsValid);
-            Assert.IsTrue((await handler.ValidateTokenAsync(segundo.Token, parameters)).IsValid);
+            var validacionPrimero = await handler.ValidateTokenAsync(primero.Token, parameters);
+            var validacionSegundo = await handler.ValidateTokenAsync(segundo.Token, parameters);
+
+            Assert.IsTrue(validacionPrimero.IsValid, validacionPrimero.Exception?.Message);
+            Assert.IsTrue(validacionSegundo.IsValid, validacionSegundo.Exception?.Message);
         }
 
         [TestMethod]
